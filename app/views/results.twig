@@ -1,0 +1,139 @@
+{% extends 'layout.twig' %}
+{% use 'common.twig' %}
+{% use 'side_bar.twig' %}
+{% use 'navbar.twig' %}
+{% use 'modals.twig' %}
+
+{% block header %} 
+	{{parent()}}
+{% endblock %}
+
+{% block friend_list %}
+	{{parent()}}
+{% endblock %}
+
+{% block pm_bar %}
+	{{parent()}}
+{% endblock %}
+
+{% block modals %}
+	{{parent()}}
+{% endblock %}
+
+{% block side_bar %}
+	{{parent()}}
+{% endblock %}
+
+{% block tabs %}
+{% endblock %}
+
+{% block content %}
+<div class="big_content_box" id="main_cont_box">
+<ul id="resultsTabs" class="nav nav-tabs nav-justified">
+	<li class="active"><a href="#posts" data-toggle="tab" style="color:#075de9">Posts ({{chats | length}})</a></li>
+	<li><a href="#users" data-toggle="tab" style="color:#075de9">Users ({{users | length}})</a></li>
+	<li><a href="#communities" data-toggle="tab" style="color:#075de9">Communities ({{communities_res | length}})</a></li>
+</ul>
+
+<div class="home_main_content" id="main_cont">
+<div id="tab_content" class="tab-content">
+
+<div class="tab-pane fade active in" id="posts">
+	{% for chat in chats %}
+		{{ block('chat_box') }}
+	{% else %}
+		<div class="chat_title_box">
+			No post results
+		</div>
+	{% endfor %}
+	<div class="page_links">
+		{{chats.links|raw}}
+	</div>
+</div>
+
+<div class="tab-pane fade in" id="users">
+	{% for usr in users %}
+		<div class="chat_title_box" style="min-height:95px;">
+			<a class="navbar_blue_color" href="{{site}}/u/{{usr.name}}">{{usr.name}}</a>
+			<div class="pull-right" style="margin-top:-5px;">
+			{% if usr.id != user.id %}
+				<button class="btn btn-primary" id="request_friend" style="display:block;margin-bottom:5px;" data-user-id="{{profile.id}}" data-user-name="{{profile.name}}"><div class="glyphicon glyphicon-plus" id="request_glyph"> </div> Send Friend Request</button>
+			{% endif %}
+			{% if user.id != usr.id %}
+				<button id="message_friend" class="btn btn-primary" data-toggle="modal" data-target="#message_modal"><div class="glyphicon glyphicon-envelope"> </div> Message</button>
+			{% endif %}
+			</div>
+			<div style="font-size:14px;">
+				<div>Level : {{usr.level}}</div>
+				{% set time_passed = server_time|date('U') - usr.updated_at|date('U') %}
+				<div> Most recent activity : 
+				<span class="chat_time" id="{{usr.updated_at}}" title="{{usr.updated_at}}">
+					{% if time_passed < 45 %}
+						seconds ago
+					{% elseif time_passed < 2700 %}
+						{% if time_passed < 90 %}
+							a minute ago
+						{% else %}
+							{{(time_passed/60)|round}} minutes ago
+						{% endif %}
+					{% elseif time_passed < 79200%}
+						{% if time_passed < 5400 %}
+							an hour ago
+						{% else %}
+							{{(time_passed/3600)|round}} hours ago
+						{% endif %}
+					{% elseif time_passed < 2160000 %}
+						{% if time_passed < 129600 %}
+							a day ago
+						{% else %}
+							{{(time_passed/86400)|round}} days ago
+						{% endif %}
+					{% elseif time_passed < 29808000 %}
+						{% if time_passed < 3888000 %}
+							a month ago
+						{% else %}
+							{{(time_passed/2592000)|round}} months ago
+						{% endif %}
+					{% else %}
+						{% if time_passed < 47260800 %}
+							a year ago
+						{% else %}
+							{{(time_passed/31536000)|round}} years ago
+						{% endif %}
+					{% endif %}
+				</span>
+				</div>
+			</div>
+		</div>
+	{% else %}
+		<div class="chat_title_box">
+			No user results
+		</div>
+	{% endfor %}
+	<div class="page_links">
+		{{users.links|raw}}
+	</div>
+</div>
+
+<div class="tab-pane fade in" id="communities">
+	{% for community in communities_res %}
+		<div class="chat_title_box" style="padding:15px;">
+			<a class="navbar_blue_color" href="{{site}}/c/{{community.name}}">{{community.name}}</a>
+			{% if community.id in user.subArr() %}
+				<div class="pull-right"><a href="{{site}}/community/unsubscribe/{{community.id}}" class="btn btn-danger btn-xs">Unsubscribe</a></div>
+			{% else %}
+				<div class="pull-right"><a id="subscribe_btn" href="{{site}}/community/subscribe/{{community.id}}" class="btn btn-success btn-xs">Subscribe</a></div>
+			{% endif %}
+		</div>
+	{% else %}
+		No community results
+	{% endfor %}
+	<div class="page_links">
+		{{communities_res.links|raw}}
+	</div>
+</div>
+
+</div>
+</div>
+</div>
+{% endblock %}

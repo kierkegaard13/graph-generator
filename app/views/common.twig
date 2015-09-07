@@ -1,0 +1,558 @@
+{% block mobile_pms %}
+<div id="mobile_pms_cont">
+	<div class="mobile_pms_nav">
+		<div class="mobile_show_open_pms mobile_nav_el mobile_nav_el_left col-xs-6" title="Conversations" style="background-color:#ddd;">
+			<div class="glyphicon glyphicon-envelope"></div>
+		</div>
+		<div class="mobile_show_friends mobile_nav_el col-xs-6" title="Friends">
+			<div class="glyphicon glyphicon-list"></div>
+		</div>
+	</div>
+	<div class="mobile_pms">
+		{% for pm in user.privateChats %}
+			<div class="mobile_pm_cont" id="ident_pm_{{pm.friends[0].id}}_{{pm.id}}">
+				<div class="mobile_pm">
+					{% if pm.friends[0].online_score() < 600 %}
+					<div class="green_ball mobile_pm_status"></div>
+					{% elseif pm.friends[0].online_score() < 7200%}
+					<div class="yellow_ball mobile_pm_status"></div>
+					{% else %}
+					<div class="red_ball mobile_pm_status"></div>
+					{% endif %}
+					<div class="glyphicon glyphicon-remove mobile_pm_remove"></div>
+					<div style="color:#333;margin-left:18px;">{{pm.friends[0].name}}</div>
+					<div style="color:#777;margin-left:20px;font-size:15px;">
+						{{pm.messages[pm.messages | length - 1].message | raw}}
+					</div>
+				</div>
+			</div>
+		{% endfor %}
+	</div>
+	<div class="mobile_friend_list" style="display:none;">
+		{% for friendship in user.friendships %}
+			<div class="mobile_friend_box" id="friend_box_for_{{friendship.entity.name}}" data-friend-id="{{friendship.entity.id}}" data-pm-chat-id="{% if friendship.entity.privateChatF[0] %}{{friendship.entity.privateChatF[0].id}}{% else %}0{% endif %}" title="{{friendship.entity.online()}}">
+			{% if friendship.entity.online_score() < 600 %}
+				<div class="green_ball friend_status" id="friend_{{friendship.entity.id}}_status"></div>
+			{% elseif friendship.entity.online_score() < 7200 %}
+				<div class="yellow_ball friend_status" id="friend_{{friendship.entity.id}}_status"></div>
+			{% else %}
+				<div class="red_ball friend_status" id="friend_{{friendship.entity.id}}_status"></div>
+			{% endif %}
+			{{friendship.entity.name}}
+			{% if not friendship.entity.chat_id or friendship.entity.anonymous %}
+				<div style="font-size:13px;margin-top:-5px;">Just browsing</div>
+			{% else %}
+				<div style="font-size:13px;margin-top:-5px;">In a <a class="visible_link" href="{{site}}/chat/{% if friendship.entity.chatRoom.live %}live{% else %}static{% endif %}/{{friendship.entity.chat_id}}">chat</a></div>
+			{% endif %}
+			</div>
+		{% else %}
+			<div style="color:white;font-size:12px;margin-top:10px;margin-left:5px;">
+				You don't have any friends yet
+			</div>
+		{% endfor %}
+	</div>
+	{% for pm in user.privateChats %}
+	<div class="mobile_pm_window" id="mobile_pm_{{pm.friends[0].id}}_{{pm.id}}" style="display:none;">
+		<div class="mobile_pm_header">
+			{% if pm.friends[0].online_score() < 600 %}
+			<div class="green_ball mobile_pm_status"></div>
+			{% elseif pm.friends[0].online_score() < 7200%}
+			<div class="yellow_ball mobile_pm_status"></div>
+			{% else %}
+			<div class="red_ball mobile_pm_status"></div>
+			{% endif %}
+			<div class="glyphicon glyphicon-arrow-left mobile_pm_return" title="Back"></div>
+			<a class="mobile_pm_name" href="{{site}}/u/{{pm.friends[0].name}}">{{pm.friends[0].name}}</a>
+		</div>
+		<div class="mobile_pm_body">
+			<div class="pm_body_mssgs">
+			{% for message in pm.messages %}
+				<div class="pm_mssg_cont">
+					<div class="pm_message {% if message.user_id == user.id %}pull-right" style="background-color:#eee;margin-left:30px;margin-right:5px;"{% else %} pull-left darker_bright_blue_background" style="margin-right:30px;margin-left:5px;"{% endif %} title="{{message.created_at}}">
+						{% if message | length > 50 %}
+							{{message.message|raw|slice(0,50)}}...
+						{% else %}
+							{{message.message|raw}}
+						{% endif %}
+					</div>	
+				</div>
+			{% endfor %} 
+			</div>
+			<div class="pm_body_alerts">
+				<div class="pm_mssg_alert pm_unseen" {% if not pm.pivot.unseen %}style="display:none;"{% endif %}>Not seen</div>
+				<div class="pm_mssg_alert pm_typing" style="display:none;">{{pm.friends[0].name}} is typing...</div>
+			</div>
+		</div>
+		<textarea class="mobile_pm_text" rows=1 {% if pm.pivot.visible == 2 %}style="display:none;"{% endif %}></textarea>
+	</div>
+	{% endfor %}
+</div>
+{% endblock %}
+
+{% block mobile_notifications %}
+<div id="mobile_notifications_cont">
+	<div class="mobile_notifications_nav">
+		<div class="mobile_show_friend_requests mobile_nav_el mobile_nav_el_left col-xs-4" title="Friend Requests" style="background-color:#ddd;">
+			<div class="glyphicon glyphicon-user"></div>
+			<span class="badge pull-right top_5" id="mobile_friend_requests_count">{% if user.friendNotifications|length > 0 %}{{user.friendNotifications|length}}{% endif %}</span>
+		</div>
+		<div class="mobile_show_mssg_requests mobile_nav_el mobile_nav_el_left col-xs-4" title="Message Requests">
+			<div class="glyphicon glyphicon-envelope"></div>
+			<span class="badge pull-right top_5" id="mobile_mssg_requests_count">{% if user.mssgNotifications|length > 0 %}{{user.mssgNotifications|length}}{% endif %}</span>
+		</div>
+		<div class="mobile_show_global_requests mobile_nav_el col-xs-4" title="Global Requests">
+			<div class="glyphicon glyphicon-globe"></div>
+			<span class="badge pull-right top_5" id="mobile_global_requests_count">{% if user.globalNotifications|length > 0 %}{{user.globalNotifications|length}}{% endif %}</span>
+		</div>
+	</div>
+	<div class="mobile_friend_requests" style="margin:10px 15px;">
+		{% for request in user.friendNotifications %}
+			{{request.message | raw}}
+		{% else %}
+			<div class='request_text'>No friend requests</div>
+		{% endfor %}
+	</div>
+	<div class="mobile_mssg_requests" style="display:none;margin:10px 15px;">
+		{% for request in user.mssgNotifications %}
+			{{request.message | raw}}
+		{% else %}
+			<div class='request_text'>No messages</div>
+		{% endfor %}
+	</div>
+	<div class="mobile_global_requests" style="display:none;margin:10px 15px;">
+		{% for request in user.globalNotifications %}
+			{{request.message | raw}}
+		{% else %}
+			<div class='request_text'>No global requests</div>
+		{% endfor %}
+	</div>
+</div>
+{% endblock %}
+
+{% block friend_list %}
+<div class="hidden-xs hidden-sm friend_list">
+<div style="position:relative;">
+	<a href="#" class="dropdown-toggle left_menu_toggle" data-toggle="dropdown">{% if user.l_menu_status == 0 %}Friends{% elseif user.l_menu_status == 1 %}Subscriptions{% else %}Recent{% endif %} <strong class="caret" style="color:white;"></strong></a>
+	<ul class="dropdown-menu" role="menu" style="width:191px;margin-top:-1px;border:none;">
+		<li><a class="show_friends" href="#" {% if user.l_menu_status == 0 %}style="display:none;"{% endif %}>Friends</a></li>
+		<li><a class="show_subscriptions" href="#" {% if user.l_menu_status == 1 %}style="display:none;"{% endif %}>Subscriptions</a></li>
+		<li><a class="show_recent" href="#" {% if user.l_menu_status == 2 %}style="display:none;"{% endif %}>Recent</a></li>
+	</ul>
+</div>
+<div id="friend_box_cont" {% if user.l_menu_status != 0 %}style="display:none;"{% endif %}>
+{% for friendship in user.friendships %}
+	<div class="friend_box" id="friend_box_for_{{friendship.entity.name}}" data-friend-id="{{friendship.entity.id}}" data-pm-chat-id="{% if friendship.entity.privateChatF[0] %}{{friendship.entity.privateChatF[0].id}}{% else %}0{% endif %}" title="{{friendship.entity.online()}}">
+	{% if friendship.entity.online_score() < 600 %}
+		<div class="green_ball friend_status" id="friend_{{friendship.entity.id}}_status"></div>
+	{% elseif friendship.entity.online_score() < 7200 %}
+		<div class="yellow_ball friend_status" id="friend_{{friendship.entity.id}}_status"></div>
+	{% else %}
+		<div class="red_ball friend_status" id="friend_{{friendship.entity.id}}_status"></div>
+	{% endif %}
+	{{friendship.entity.name}}
+	{% if not friendship.entity.chat_id or friendship.entity.anonymous %}
+		<div style="font-size:13px;margin-top:-5px;">Just browsing</div>
+	{% else %}
+		<div style="font-size:13px;margin-top:-5px;">In a <a class="visible_link" href="{{site}}/chat/{% if friendship.entity.chatRoom.live %}live{% else %}static{% endif %}/{{friendship.entity.chat_id}}">chat</a></div>
+	{% endif %}
+	</div>
+{% else %}
+	<div class="friend_box" style="font-size:12px;">
+		You don't have any friends yet
+	</div>
+{% endfor %}
+</div>
+<div id="subscription_cont" {% if user.l_menu_status != 1 %}style="display:none;"{% endif %}>
+	{% for sub in user.subscriptions %}
+		<a class="subscription" href="{{site}}/c/{{sub.name}}">{{sub.name}}</a>
+	{% else %}
+		<div class="subscription">No subscriptions</div>
+	{% endfor %}
+</div>
+<div id="recent_cont" {% if user.l_menu_status != 2 %}style="display:none;"{% endif %}>
+	{% for chat in user.recent %}
+		<a class="recent" href="{{site}}/chat/{% if chat.live %}live{% else %}static{% endif %}/{{chat.id}}">{% if chat.title | length > 50 %}{{chat.title | slice(0,50)}}...{% else %}{{chat.title}}{% endif %}</a>
+	{% else %}
+		<div class="recent">No recent chats</div>
+	{% endfor %} 
+</div>
+</div>
+{% endblock %}
+
+{% block pm_bar %}
+<div class="pm_bar hidden-xs">
+	{% for pm in user.privateChats %}
+		<div class="pm_cont {% if pm.pivot.visible == 1 %}pm_visible" style="visibility:hidden;{% endif %}" id="pm_{{pm.friends[0].id}}_{{pm.id}}">
+			<div class="pm_header">
+				{% if pm.friends[0].online_score() < 600 %}
+				<div class="green_ball pm_status"></div>
+				{% elseif pm.friends[0].online_score() < 7200%}
+				<div class="yellow_ball pm_status"></div>
+				{% else %}
+				<div class="red_ball pm_status"></div>
+				{% endif %}
+				<div class="glyphicon glyphicon-remove pm_remove"></div>
+				<a class="pm_name" href="{{site}}/u/{{pm.friends[0].name}}">{{pm.friends[0].name}}</a>
+			</div>
+			<div class="pm_body" {% if pm.pivot.visible == 2 %}style="display:none;"{% endif %}>
+				<div class="pm_body_mssgs">
+				{% for message in pm.messages %}
+					<div class="pm_mssg_cont">
+						<div class="pm_message {% if message.user_id == user.id %}pull-right" style="background-color:#eee;margin-left:30px;margin-right:5px;"{% else %} pull-left darker_bright_blue_background" style="margin-right:30px;margin-left:5px;"{% endif %} title="{{message.created_at}}">
+							{{message.message|raw}}
+						</div>	
+					</div>
+				{% endfor %} 
+				</div>
+				<div class="pm_body_alerts">
+					<div class="pm_mssg_alert pm_unseen" {% if not pm.pivot.unseen %}style="display:none;"{% endif %}>Not seen</div>
+					<div class="pm_mssg_alert pm_typing" style="display:none;">{{pm.friends[0].name}} is typing...</div>
+				</div>
+			</div>
+			<textarea class="pm_text" rows=1 {% if pm.pivot.visible == 2 %}style="display:none;"{% endif %}></textarea>
+		</div>
+	{% endfor %}
+</div>
+{% endblock %}
+
+{% block chat_box %}
+<div class="chat_title_box {% if not chat.seen() %}{% if chat.pinned and not curr_community_id %}red_left_border{% elseif chat.community_pinned %}green_left_border{% else %}blue_left_border{% endif %}{% endif %}">
+	<div class="row">
+		<div class="number_box"> {{loop.index}}. </div>
+		<div class="vote_box">
+			{% if chat.id in upvoted %}
+				<span class="glyphicon glyphicon-menu-up big_upvote js_upvote green_color" id="upvote_{{chat.id}}"></span>
+				<div class="upvote_count" id="votes_{{chat.id}}">{{chat.upvotes - chat.downvotes}}</div>
+				<span class="glyphicon glyphicon-menu-down big_downvote js_downvote" id="downvote_{{chat.id}}"></span>
+			{% elseif chat.id in downvoted %}
+				<span class="glyphicon glyphicon-menu-up big_upvote js_upvote" id="upvote_{{chat.id}}"></span>
+				<div class="upvote_count" id="votes_{{chat.id}}">{{chat.upvotes - chat.downvotes}}</div>
+				<span class="glyphicon glyphicon-menu-down big_downvote js_downvote red_color" id="downvote_{{chat.id}}"></span>
+			{% else %}
+				<span class="glyphicon glyphicon-menu-up big_upvote js_upvote" id="upvote_{{chat.id}}"></span>
+				<div class="upvote_count" id="votes_{{chat.id}}">{{chat.upvotes - chat.downvotes}}</div>
+				<span class="glyphicon glyphicon-menu-down big_downvote js_downvote" id="downvote_{{chat.id}}"></span>
+			{% endif %}
+		</div>
+		{% if chat.image %}
+			<a class="pull-left link_thumbnail" href="{{chat.link}}">
+				<img class="async_img" src="//:0" data-chat-img="{{chat.image}}" alt="Image Error" width="80" height="80">
+			</a>
+		{% endif %}
+		{% if chat.live %}
+			<a href="{{site}}/{% if curr_community_id %}c/{{curr_community.name}}/{% endif %}live" class="pull-right glyphicon glyphicon-play brighter_green_color chat_status_indicator" title="Live"></a>
+		{% else %}
+			<a href="{{site}}/{% if curr_community_id %}c/{{curr_community.name}}/{% endif %}static" class="pull-right glyphicon glyphicon-pause darker_yellow_color chat_status_indicator" title="Paused"></a>
+		{% endif %}
+		<div class="chat_community_str" style="display:none;">#{{chat.communities|join(' #')}}</div>
+		<div class="chat_link_str" style="display:none;">{{chat.link}}</div>
+		<div class="chat_title_str" style="display:none;">{{chat.title}}</div>
+		<div class="chat_desc_str" style="display:none;">{{chat.raw_details}}</div>
+		<div class="chat_live_str" style="display:none;">{{chat.live}}</div>
+		<div class="chat_nsfw_str" style="display:none;">{{chat.nsfw}}</div>
+		<div class="chat_id_str" style="display:none;">{{chat.id}}</div>
+		<div class="chat_title">
+			{% if chat.pinned and not curr_community_id %}
+				{% if chat.link %}
+					<a class="title_red_link" href="{{chat.link}}" >{{chat.title}}</a> <span class="site_name">from {{chat.site_name}}</span>
+				{% else %}
+					<a class="title_red_link" href="{{site}}/chat/{% if chat.live %}live{% else %}static{% endif %}/{{chat.id}}">{{chat.title}}</a>
+				{% endif %}
+			{% elseif chat.community_pinned %}
+				{% if chat.link %}
+					<a class="darker_green_link" href="{{chat.link}}">{{chat.title}}</a> <span class="site_name">from {{chat.site_name}}</span>
+				{% else %}
+					<a class="darker_green_link" href="{{site}}/chat/{% if chat.live %}live{% else %}static{% endif %}/{{chat.id}}">{{chat.title}}</a>
+				{% endif %}
+			{% else %}
+				{% if chat.link %}
+					<a class="chat_link" href="{{chat.link}}">{{chat.title}}</a> <span class="site_name">from {{chat.site_name}}</span>
+				{% else %}
+					<a class="chat_link" href="{{site}}/chat/{% if chat.live %}live{% else %}static{% endif %}/{{chat.id}}">{{chat.title}}</a>
+				{% endif %}
+			{% endif %}
+			{% if chat.admin % 275604541 == 0 %}
+				<div class="chat_info">Created by 
+					<a href="{{site}}/u/{{chat.admin}}">
+						<strong>
+							{% if chat.author.is_admin or chat.author.is_mod %}
+								<span class="red_color">{{chat.admin}}{% if chat.author.is_admin %}[A]{% elseif chat.author.is_mod %}[M]{% endif %}</span></strong></a>,
+							{% elseif curr_community_id %}
+								{% if chat.admin_id == community_admin.user_id or chat.admin_id in curr_community.moderators() %}
+									<span class="green_color">{{chat.admin}}{% if chat.admin_id == community_admin.user_id %}[CA]{% elseif chat.admin_id in curr_community.moderators() %}[CM]{% endif %}</span></strong></a>,
+								{% else %}
+									{{chat.admin}}{% if chat.author.is_admin %}[A]{% elseif chat.author.is_mod %}[M]{% endif %}</strong></a>,
+								{% endif %}
+							{% else %}
+								{{chat.admin}}{% if chat.author.is_admin %}[A]{% elseif chat.author.is_mod %}[M]{% endif %}</strong></a>,
+							{% endif %}
+			{% else %}
+				<div class="chat_info">Created by <strong>{{chat.admin}}</strong>, 
+			{% endif %}
+				{% set time_passed = server_time|date('U') - chat.created_at|date('U') %}
+				<span class="chat_time" id="{{chat.created_at}}" title="{{chat.created_at}}">
+					{% if time_passed < 45 %}
+						seconds ago
+					{% elseif time_passed < 2700 %}
+						{% if time_passed < 90 %}
+							a minute ago
+						{% else %}
+							{{(time_passed/60)|round}} minutes ago
+						{% endif %}
+					{% elseif time_passed < 79200%}
+						{% if time_passed < 5400 %}
+							an hour ago
+						{% else %}
+							{{(time_passed/3600)|round}} hours ago
+						{% endif %}
+					{% elseif time_passed < 2160000 %}
+						{% if time_passed < 129600 %}
+							a day ago
+						{% else %}
+							{{(time_passed/86400)|round}} days ago
+						{% endif %}
+					{% elseif time_passed < 29808000 %}
+						{% if time_passed < 3888000 %}
+							a month ago
+						{% else %}
+							{{(time_passed/2592000)|round}} months ago
+						{% endif %}
+					{% else %}
+						{% if time_passed < 47260800 %}
+							a year ago
+						{% else %}
+							{{(time_passed/31536000)|round}} years ago
+						{% endif %}
+					{% endif %}
+				</span>
+				{% if not curr_community_id %}
+					in Communities:
+					{% for community in chat.communities %}
+						<span class="chat_communities"><a href="{{site}}/c/{{community.name}}"><strong>#{{community.name}}</strong></a> </span>
+					{% endfor %}
+					and
+				{% else %}
+					with
+				{% endif %}
+				<a href="{{site}}/chat/{% if chat.live %}live{% else %}static{% endif %}/{{chat.id}}" style="color:gray;"><strong>{{chat.messages | length }} comments</strong></a>
+			</div>
+			<div id="description_{{chat.id}}" class="description_cont" {% if chat.link %}style="margin-left:100px;"{% endif %}>
+				{{chat.details | raw}}
+			</div>
+			<div> 
+				{% if chat.nsfw %}
+					<a href="{{site}}/{% if curr_community_id %}c/{{curr_community.name}}/{% endif %}nsfw" class="btn btn-danger btn-sm chat_info_link">NSFW</a>
+				{% endif %}
+				{% if user.name == chat.admin %}
+					<button class="btn btn-default btn-sm chat_info_link edit_chat_link" data-toggle="modal" data-target="edit_modal">Edit</button>
+				{% endif %}
+				{% if user.name == chat.admin %}
+					<a href="#" data-toggle="modal" data-remove-link="{{site}}/chat/hard-remove/{{chat.id}}/{{curr_community_id}}" class="btn btn-default btn-sm chat_info_link remove_chat_link" data-target="remove_modal">Remove</a>
+				{% elseif user.is_admin or ((user.community_admin == curr_community_id or user.community_mod == curr_community_id) and (curr_community_id|length > 0)) %}
+					<a href="#" data-toggle="modal" data-remove-link="{{site}}/chat/soft-remove/{{chat.id}}/{{curr_community_id}}" class="btn btn-default btn-sm chat_info_link remove_chat_link" data-target="remove_modal">Remove</a>
+				{% endif %}
+				{% if curr_community_id %}
+					{% if chat.community_pinned %}
+						{% if user.community_admin == curr_community_id or user.community_mod == curr_community_id %}
+							<a href="{{site}}/community/unpin-post/{{chat.id}}/{{curr_community_id}}" class="btn btn-default btn-sm chat_info_link">UnPin</a>
+						{% else %}
+							<a href="{{site}}/c/{{curr_community.name}}/pinned" class="btn btn-default btn-sm chat_info_link">Pinned</a>
+						{% endif %}
+					{% elseif user.community_admin == curr_community_id or user.community_mod == curr_community_id %}
+						<a href="{{site}}/community/pin-post/{{chat.id}}/{{curr_community_id}}" class="btn btn-default btn-sm chat_info_link">Pin</a>
+					{% endif %}
+				{% else %}
+					{% if chat.pinned %}
+						{% if user.is_admin or user.is_mod %}
+							<a href="{{site}}/chat/unpin-post/{{chat.id}}" class="btn btn-default btn-sm chat_info_link">UnPin</a>
+						{% else %}
+							<a href="{{site}}/pinned" class="btn btn-default btn-sm chat_info_link">Pinned</a>
+						{% endif %}
+					{% elseif user.is_admin or user.is_mod %}
+						<a href="{{site}}/chat/pin-post/{{chat.id}}" class="btn btn-default btn-sm chat_info_link">Pin</a>
+					{% endif %}
+				{% endif %}
+				<a href="{{site}}/chat/static/{{chat.id}}" class="btn btn-default btn-sm chat_info_link">Static</a>
+				{% if logged_in %}
+					{% if chat.id in saved %}
+						<a href="{{site}}/profile/unsave/chat/{{chat.id}}" class="btn btn-default btn-sm chat_info_link">UnSave</a>
+					{% else %}
+						<a href="{{site}}/profile/save/chat/{{chat.id}}" class="btn btn-default btn-sm chat_info_link">Save</a>
+					{% endif %}
+				{% endif %}
+				{% if chat.details | length > 0 %}
+					<button class="btn btn-default btn-sm chat_info_link toggle_description">Show description</button>
+				{% endif %}
+			</div>
+		</div>
+	</div>
+</div>
+{% endblock %}
+
+{% block static_mssg_cont %}
+<div class="static_mssg_cont_inner">
+	<div class="static_mssg js_mssg" id="message_{{message.id}}">
+		<div class="js_raw_mssg_content" style="display:none;">{{message.raw_message}}</div>
+		<div class="mssg_body_cont">
+			<div class="static_vote_box">
+				{% if message.id in mssg_upvoted %}
+					<span class="glyphicon glyphicon-menu-up js_mssg_upvote static_upvote green_color" id="mssg_upvote_{{message.id}}"></span>
+					<div class="upvote_count" id="mssg_votes_{{message.id}}">{{message.upvotes - message.downvotes}}</div>
+					<span class="glyphicon glyphicon-menu-down js_mssg_downvote static_downvote" id="mssg_downvote_{{message.id}}"></span>
+				{% elseif message.id in mssg_downvoted %}
+					<span class="glyphicon glyphicon-menu-up js_mssg_upvote static_upvote" id="mssg_upvote_{{message.id}}"></span>
+					<div class="upvote_count" id="mssg_votes_{{message.id}}">{{message.upvotes - message.downvotes}}</div>
+					<span class="glyphicon glyphicon-menu-down js_mssg_downvote static_downvote red_color" id="mssg_downvote_{{message.id}}"></span>
+				{% else %}
+					<span class="glyphicon glyphicon-menu-up js_mssg_upvote static_upvote" id="mssg_upvote_{{message.id}}"></span>
+					<div class="upvote_count" id="mssg_votes_{{message.id}}">{{message.upvotes - message.downvotes}}</div>
+					<span class="glyphicon glyphicon-menu-down js_mssg_downvote static_downvote" id="mssg_downvote_{{message.id}}"></span>
+				{% endif %}
+			</div>
+			<div class="js_mssg_body static_mssg_body author_{{message.author}}">
+				<div id="toggle_{{message.id}}" class="toggle_responses">
+					<span class="caret caret_tooltip" id="caret_{{message.id}}" data-toggle="tooltip" data-original-title="Hide Responses" data-container="body" data-placement="top"></span>
+				</div>
+				{% if 'This message has been deleted' in message.message == 0 and (serial == message.author or user.name == message.author) %}
+					<span id="remove_{{message.id}}" class="glyphicon glyphicon-remove mssg_icon" data-mssg-serial="{{response.serial}}" data-toggle="tooltip" title="Delete post" data-container="body" data-placement="top"></span>	
+				{% endif %}  
+				<strong class="mssg_op" data-author="{{message.author}}"><a href="{{site}}/u/{{message.author}}" style="color:{{color_arr[message.serial % 7]}}"> {{message.author}}
+				{% if message.author == chat.admin %}
+					<span class="glyphicon glyphicon-king"></span>	
+				{% elseif message.author in mods %}
+					<span class="glyphicon glyphicon-knight"></span>	
+				{% endif %}</a></strong>: {{message.message | raw}}
+				<div class="time_box">
+					{% if message.id in saved %}
+						<div class="static_tool"><a href="{{site}}/profile/unsave/message/{{message.id}}"><strong>UnSave</strong></a></div>
+					{% else %}
+						<div class="static_tool"><a href="{{site}}/profile/save/message/{{message.id}}"><strong>Save</strong></a></div>
+					{% endif %}
+					{% if user.id == message.user_id %}
+						<div class="static_tool"><a class="js_edit_message" href="#" data-toggle="modal" data-target="#edit_message_modal"><strong>Edit</strong></a></div>
+					{% endif %}
+					{% set time_passed = server_time|date('U') - message.created_at|date('U') %}
+					<div class="time" id="{{message.created_at}}" title="{{message.created_at}}">
+						{% if time_passed < 45 %}
+							seconds ago
+						{% elseif time_passed < 2700 %}
+							{% if time_passed < 90 %}
+								a minute ago
+							{% else %}
+								{{(time_passed/60)|round}} minutes ago
+							{% endif %}
+						{% elseif time_passed < 79200%}
+							{% if time_passed < 5400 %}
+								an hour ago
+							{% else %}
+								{{(time_passed/3600)|round}} hours ago
+							{% endif %}
+						{% elseif time_passed < 2160000 %}
+							{% if time_passed < 129600 %}
+								a day ago
+							{% else %}
+								{{(time_passed/86400)|round}} days ago
+							{% endif %}
+						{% elseif time_passed < 29808000 %}
+							{% if time_passed < 3888000 %}
+								a month ago
+							{% else %}
+								{{(time_passed/2592000)|round}} months ago
+							{% endif %}
+						{% else %}
+							{% if time_passed < 47260800 %}
+								a year ago
+							{% else %}
+								{{(time_passed/31536000)|round}} years ago
+							{% endif %}
+						{% endif %}
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+{% endblock %}
+
+{% block static_resp_cont %}
+<div class="static_mssg_cont_inner">
+	<div class="static_mssg js_mssg" id="message_{{response.id}}">
+		<div class="js_raw_mssg_content" style="display:none;">{{response.raw_message}}</div>
+		<div class="mssg_body_cont">
+			<div class="static_vote_box">
+				{% if response.id in mssg_upvoted %}
+					<span class="glyphicon glyphicon-menu-up js_mssg_upvote static_upvote green_color" id="mssg_upvote_{{response.id}}"></span>
+					<div class="upvote_count" id="mssg_votes_{{response.id}}">{{response.upvotes - response.downvotes}}</div>
+					<span class="glyphicon glyphicon-menu-down js_mssg_downvote static_downvote" id="mssg_downvote_{{response.id}}"></span>
+				{% elseif response.id in mssg_downvoted %}
+					<span class="glyphicon glyphicon-menu-up js_mssg_upvote static_upvote" id="mssg_upvote_{{response.id}}"></span>
+					<div class="upvote_count" id="mssg_votes_{{response.id}}">{{response.upvotes - response.downvotes}}</div>
+					<span class="glyphicon glyphicon-menu-down js_mssg_downvote static_downvote red_color" id="mssg_downvote_{{response.id}}"></span>
+				{% else %}
+					<span class="glyphicon glyphicon-menu-up js_mssg_upvote static_upvote" id="mssg_upvote_{{response.id}}"></span>
+					<div class="upvote_count" id="mssg_votes_{{response.id}}">{{response.upvotes - response.downvotes}}</div>
+					<span class="glyphicon glyphicon-menu-down js_mssg_downvote static_downvote" id="mssg_downvote_{{response.id}}"></span>
+				{% endif %}
+			</div>
+			<div class="js_mssg_body static_mssg_body author_{{response.author}}">
+				<div id="toggle_{{response.id}}" class="toggle_responses">
+					<span class="caret caret_tooltip" id="caret_{{response.id}}" data-toggle="tooltip" data-original-title="Hide Responses" data-container="body" data-placement="top"></span>
+				</div>
+				{% if 'This response has been deleted' in response.message == 0 and (serial == response.author or user.name == response.author) %}
+					<span id="remove_{{response.id}}" class="glyphicon glyphicon-remove mssg_icon" data-mssg-serial="{{response.serial}}" data-toggle="tooltip" title="Delete post" data-container="body" data-placement="top"></span>	
+				{% endif %}  
+				<strong class="mssg_op" data-author="{{response.author}}"><a href="{{site}}/u/{{response.author}}" style="color:{{color_arr[message.serial % 7]}}"> {{response.author}}
+				{% if response.author == chat.admin %}
+					<span class="glyphicon glyphicon-king"></span>	
+				{% elseif response.author in mods %}
+					<span class="glyphicon glyphicon-knight"></span>	
+				{% endif %}</a></strong>: {{response.message | raw}}
+				<div class="time_box">
+					{% if response.id in saved %}
+						<div class="static_tool"><a href="{{site}}/profile/unsave/message/{{response.id}}"><strong>UnSave</strong></a></div>
+					{% else %}
+						<div class="static_tool"><a href="{{site}}/profile/save/message/{{response.id}}"><strong>Save</strong></a></div>
+					{% endif %}
+					{% if user.id == response.user_id %}
+						<div class="static_tool"><a class="js_edit_message" href="#" data-toggle="modal" data-target="#edit_message_modal"><strong>Edit</strong></a></div>
+					{% endif %}
+					{% set time_passed = server_time|date('U') - response.created_at|date('U') %}
+					<div class="time" id="{{response.created_at}}" title="{{response.created_at}}">
+						{% if time_passed < 45 %}
+							seconds ago
+						{% elseif time_passed < 2700 %}
+							{% if time_passed < 90 %}
+								a minute ago
+							{% else %}
+								{{(time_passed/60)|round}} minutes ago
+							{% endif %}
+						{% elseif time_passed < 79200%}
+							{% if time_passed < 5400 %}
+								an hour ago
+							{% else %}
+								{{(time_passed/3600)|round}} hours ago
+							{% endif %}
+						{% elseif time_passed < 2160000 %}
+							{% if time_passed < 129600 %}
+								a day ago
+							{% else %}
+								{{(time_passed/86400)|round}} days ago
+							{% endif %}
+						{% elseif time_passed < 29808000 %}
+							{% if time_passed < 3888000 %}
+								a month ago
+							{% else %}
+								{{(time_passed/2592000)|round}} months ago
+							{% endif %}
+						{% else %}
+							{% if time_passed < 47260800 %}
+								a year ago
+							{% else %}
+								{{(time_passed/31536000)|round}} years ago
+							{% endif %}
+						{% endif %}
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+{% endblock %}

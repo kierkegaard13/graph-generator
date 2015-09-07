@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width,height=device-height, initial-scale=1.0">
+	<meta name="description" content="Welcome to mutual cognizance, a new type of live social forum">
+	<meta name="robots" content="all">
+        <title>Graph Generator</title>
+	<link rel="icon" href="{{base}}/GavinWeb.ico" type="image/x-icon">
+	<link href='http://fonts.googleapis.com/css?family=Roboto:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" />
+        <link rel="stylesheet" href="{{base}}/app/libraries/css/app.min.css" />
+        {% block styles %}{% endblock %}
+	<script src='//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.4/jquery.min.js'></script>
+</head>
+<body style="overflow:hidden;">
+<div class="row" style="height:100%;">
+	<div class="col-sm-3 graph_info">
+		<div class="form-group">
+			<label for="num_nodes">No. of nodes</label>
+			<input value="20" placeholder="Default: 20" id="num_nodes" name="num_nodes" class="form-control" type="text">
+		</div>
+		<div class="form-group" style="border:none;background-color:#ddd;">
+			<label for="graph_type">Type</label>
+			<select id="graph_type" name="graph_type" class="form-control">
+				<option value="tree">Tree</option>
+				<option value="btree">Binary Tree</option>
+				<option value="sparse">Sparse</option>
+				<option value="dense">Dense</option>
+				<option value="full">Fully Connected</option>
+			</select>
+		</div>
+		<div class="row">
+			<div class="form-group col-sm-6">
+				<label for="min_w">Min Weight</label>
+				<input value="1" placeholder="Default: 1" id="min_w" name="min_w" class="form-control" type="text">
+			</div>
+			<div class="form-group col-sm-6">
+				<label for="max_w">Max Weight</label>
+				<input value="100" placeholder="Default: 100" id="max_w" name="max_w" class="form-control" type="text">
+			</div>
+		</div>
+		<div id="graph_data">
+		</div>
+		<button id="graph_submit" class="btn btn-primary">Refresh</button>
+	</div>
+	<div class="col-sm-9 graph_cont">
+	</div>
+</div>
+<script src='//cdnjs.cloudflare.com/ajax/libs/jqueryui/1.11.2/jquery-ui.min.js'></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.3/d3.min.js"></script>
+<script src='//cdnjs.cloudflare.com/ajax/libs/moment.js/2.9.0/moment.min.js'></script>
+<script src='//cdnjs.cloudflare.com/ajax/libs/marked/0.3.2/marked.min.js'></script>
+<script src='https://cdnjs.cloudflare.com/ajax/libs/velocity/1.2.1/velocity.min.js'></script>
+<script src='https://cdnjs.cloudflare.com/ajax/libs/velocity/1.2.1/velocity.ui.min.js'></script>
+<script type="text/javascript">
+	document.writeln("<script type='text/javascript' src='{{base}}/app/libraries/js/bootstrap.min.js'><" + "/script>");
+	document.writeln("<script type='text/javascript' src='{{base}}/app/libraries/js/app.min.js'><" + "/script>");
+</script>
+</body>
+</html>

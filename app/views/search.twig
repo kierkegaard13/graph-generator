@@ -1,0 +1,26 @@
+{% extends 'search_layout.twig' %}
+{% use 'common.twig' %}
+
+{% block header %} 
+	{{parent()}}
+{% endblock %}
+
+{% block modals %}
+	{{parent()}}
+{% endblock %}
+
+{% block content %}
+<div class="entry_search"> 
+	<div style="color:white;font-size:18px;text-align:center;margin-bottom:5px;"> Welcome, what are you interested in today? <span class="glyphicon glyphicon-info-sign" title="You can search for interests or specific users, posts, and communnities"><span></div>
+	<form role="search">
+		<div class="form-group dropdown has-feedback">
+			<input class="form-control entry_search_bar" id="search_input" type="text" placeholder="Search for interests like gaming, news, science, etc." title="Hit enter or click the search icon to see all results" autocomplete="off" maxlength="{{max_title_length}}">
+			<span class="glyphicon glyphicon-search entry_search_submit form-control-feedback"></span>
+			<ul class="dropdown-menu" id="community_dropdown" role="menu" aria-labelledby="search_input">
+			</ul>
+		</div>
+	</form>
+		<a href="{{site}}/home" class="btn btn-primary col-xs-12" title="Browse posts" style="margin-bottom:10px;">Browse</a>
+		<a href="{{site}}/chat/random" class="btn btn-primary col-xs-12" title="Jump into a random chat">Random</a>
+</div>
+{% endblock %}

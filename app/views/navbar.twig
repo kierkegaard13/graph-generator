@@ -1,0 +1,85 @@
+{% block header %}
+<nav class="navbar {% if logged_in %}nav_pad_l{% endif %}">
+	<div class="navbar-header">
+		<button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#mutual_navbar">
+		<span class="sr-only">Toggle navigation</span>
+		<span class="icon-bar"></span>
+		<span class="icon-bar"></span>
+		<span class="icon-bar"></span>
+		</button>
+		<a class="{{home_active}} navbar-brand mutual_route hidden-xs" href="{{site}}/home"><img src="{{base}}/MC_home2.png"></a>
+		<a class="{{home_active}} navbar-brand visible-xs" href="{{site}}/home"><img src="{{base}}/MC_home2.png"></a>
+		{% if logged_in %}
+			<a class="navbar-brand visible-xs" href="{{site}}/profile/logout" title="Logout"><div class="glyphicon glyphicon-log-out"></div></a>
+			<btn id="show_mobile_pms" class="navbar-brand visible-xs" title="Private messaging"><div class="glyphicon glyphicon-user"></div></btn>
+			<btn id="show_mobile_notifications" class="navbar-brand visible-xs" title="Notifications"><div class="glyphicon glyphicon-globe"></div></btn>
+		{% else %}
+			<btn class="navbar-brand visible-xs" data-toggle="modal" data-target="#register_modal" title="Sign up/in"><div class="glyphicon glyphicon-log-in"></div></btn>
+		{% endif %}
+		{% if (chat.admin | length > 0) and (user.name == chat.admin or serial == chat.admin) %}
+			<btn class="navbar-brand visible-xs edit_chat_link" data-toggle="modal" data-target="edit_modal" title="Edit Chat"><div class="glyphicon glyphicon-book"></div></btn>
+		{% else %}
+			{% if chat.details | length > 0 %}
+				<btn class="navbar-brand visible-xs" data-toggle="modal" data-target="#continue_modal" title="Read description"><div class="glyphicon glyphicon-book"></div></btn>
+			{% endif %}
+		{% endif %}
+		{% if curr_community_id %}
+			<btn class="navbar-brand visible-xs" data-toggle="modal" data-target="#tag_info_modal" title="Community info"><div class="glyphicon glyphicon-info-sign"></div></btn>
+			{% if user.community_admin == curr_community_id and curr_community_id | length > 0 %}
+				<btn class="navbar-brand visible-xs" id="mobile_community_edit" data-toggle="modal" data-target="community_edit_modal" title="Manage community"><div class="glyphicon glyphicon-cog"></div></btn>
+			{% endif %}
+		{% endif %}
+	</div>
+	<div class="collapse navbar-collapse" id="mutual_navbar" style="position:relative;">
+		{% if not search_page %}
+			<div class="community_search_cont">
+				<span class="toggle_search glyphicon glyphicon-menu-left community_search_expand"></span>
+				<span class="toggle_search glyphicon glyphicon-search community_search_icon"></span>
+				<span class="toggle_search glyphicon glyphicon-menu-right community_search_collapse" style="display:none;"></span>
+				<form class="navbar-form community_search has-feedback" role="search">
+					<div class="form-group dropdown search_drop_cont">
+						<input class="form-control community_input" id="search_input" type="text" placeholder="Search" autocomplete="off" maxlength="{{max_title_length}}">
+						<span class="glyphicon glyphicon-search entry_search_submit form-control-feedback"></span>
+						<ul class="dropdown-menu" id="community_dropdown" role="menu" aria-labelledby="search_input">
+						</ul>
+					</div>
+				</form>
+			</div>
+		{% endif %}
+		<ul class="nav navbar-nav nav_right {% if not search_page %}nav_pad_r{% endif %}">
+			{% if logged_in %}
+				<li class="visible-xs">
+					<a href="{{site}}/u/{{user.name}}">My profile</a>
+				</li>
+			{% endif %}
+			{% for community in communities %}
+				{% if curr_community.name == community.name %}
+					<li class="visible-xs">
+						<div class="com_link_cont highlight_light_blue">
+							{% if community.id in user.subArr() %}
+								<a href="{{site}}/community/unsubscribe/{{community.id}}" class="glyphicon glyphicon-ok nav_glyph" title="Unsubscribe"></a>
+							{% else %}
+								<a href="{{site}}/community/subscribe/{{community.id}}" class="glyphicon glyphicon-plus nav_glyph" title="Subscribe"></a>
+							{% endif %}
+							<a class="mobile_com" href="{{site}}/c/{{community.name}}">{{community.name}}</a>
+						</div>
+					</li>
+					<li class="hidden-xs"> <a class="highlight_light_blue mutual_route" href="{{site}}/c/{{community.name}}">{{community.name}}</a> </li>
+				{% else %}
+					<li class="visible-xs">
+						<div class="com_link_cont">
+							{% if community.id in user.subArr() %}
+								<a href="{{site}}/community/unsubscribe/{{community.id}}" class="glyphicon glyphicon-ok nav_glyph" title="Unsubscribe"></a>
+							{% else %}
+								<a href="{{site}}/community/subscribe/{{community.id}}" class="glyphicon glyphicon-plus nav_glyph" title="Subscribe"></a>
+							{% endif %}
+							<a class="mobile_com" href="{{site}}/c/{{community.name}}">{{community.name}}</a>
+						</div>
+					</li>
+					<li class="hidden-xs"> <a class="mutual_route" href="{{site}}/c/{{community.name}}">{{community.name}}</a> </li>
+				{% endif %}
+			{% endfor %}
+		</ul>
+	</div>
+</nav>
+{% endblock %}

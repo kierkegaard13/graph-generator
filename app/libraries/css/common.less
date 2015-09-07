@@ -1,0 +1,241 @@
+@import "mixins";
+
+html,body{
+  height:100%;
+}
+body{
+  background-color:@background_color;
+  font-size:@default_font_size;
+  font-family: @font_face;
+}
+p{
+  margin:0;
+}
+blockquote{
+  margin:5px 0px;
+  border-left-color:#075de9;
+  padding:0;
+}
+blockquote:before,blockquote:after {
+  content:none;
+}
+blockquote p{
+  font-size:14px;
+  margin-left:5px;
+}
+pre{
+  margin:5px 0 5px 0px;
+  display:block;
+}
+pre>code{
+  border:none;
+}
+code{
+  background-color:#f5f5f5;
+  border:1px solid #ccc;
+  border-radius:2px;
+}
+.fill_cont {
+  width:100%;
+}
+.bottom_5 {
+  margin-bottom:5px;
+}
+.top_5 {
+  margin-top:5px;
+}
+.top_10 {
+  margin-top:10px;
+}
+.pad_l_10 {
+  padding-left:10px;
+}
+.pad_l_20 {
+  padding-left:20px;
+}
+.marg_l_20 {
+  margin-left:20px;
+}
+textarea {
+  width:100%;
+  resize:none;
+  border-radius:2px;
+  margin-bottom:0px;
+  padding:10px;
+  margin-top:5px;
+  font-size:16px;
+}
+.hljs {
+	  display: block; padding: 0.5em;
+	    color: @dark_text_primary;
+	      background: #f8f8f8
+}
+
+.hljs-comment,
+.hljs-template_comment,
+.diff .hljs-header,
+.hljs-javadoc {
+	  color: #998;
+	    font-style: italic
+}
+
+.hljs-keyword,
+.css .rule .hljs-keyword,
+.hljs-winutils,
+.javascript .hljs-title,
+.nginx .hljs-title,
+.hljs-subst,
+.hljs-request,
+.hljs-status {
+	  color: @dark_text_primary;
+	    font-weight: bold
+}
+
+.hljs-number,
+.hljs-hexcolor,
+.ruby .hljs-constant {
+	  color: #099;
+}
+
+.hljs-string,
+.hljs-community .hljs-value,
+.hljs-phpdoc,
+.tex .hljs-formula {
+	  color: #d14
+}
+
+.hljs-title,
+.hljs-id,
+.coffeescript .hljs-params,
+.scss .hljs-preprocessor {
+	  color: #900;
+	    font-weight: bold
+}
+
+.javascript .hljs-title,
+.lisp .hljs-title,
+.clojure .hljs-title,
+.hljs-subst {
+	  font-weight: normal
+}
+
+.hljs-class .hljs-title,
+.haskell .hljs-type,
+.vhdl .hljs-literal,
+.tex .hljs-command {
+	  color: #458;
+	    font-weight: bold
+}
+
+.hljs-community,
+.hljs-community .hljs-title,
+.hljs-rules .hljs-property,
+.django .hljs-community .hljs-keyword {
+	  color: #000080;
+	    font-weight: normal
+}
+
+.hljs-attribute,
+.hljs-variable,
+.lisp .hljs-body {
+	  color: #008080
+}
+
+.hljs-regexp {
+	  color: #009926
+}
+
+.hljs-symbol,
+.ruby .hljs-symbol .hljs-string,
+.lisp .hljs-keyword,
+.tex .hljs-special,
+.hljs-prompt {
+	  color: #990073
+}
+
+.hljs-built_in,
+.lisp .hljs-title,
+.clojure .hljs-built_in {
+	  color: #0086b3
+}
+
+.hljs-preprocessor,
+.hljs-pragma,
+.hljs-pi,
+.hljs-doctype,
+.hljs-shebang,
+.hljs-cdata {
+	  color: #999;
+	    font-weight: bold
+}
+
+.hljs-deletion {
+	  background: #fdd
+}
+
+.hljs-addition {
+	  background: #dfd
+}
+
+.diff .hljs-change {
+	  background: #0086b3
+}
+
+.hljs-chunk {
+	  color: #aaa
+}
+.ui-resizable { position: relative;}
+.ui-resizable-handle { position: absolute;font-size: 0.1px; display: block; }
+.ui-resizable-disabled .ui-resizable-handle, .ui-resizable-autohide .ui-resizable-handle { display: none; }
+.ui-resizable-n { cursor: n-resize; height: 7px; width: 100%; top: -5px; left: 0; }
+.ui-resizable-s { cursor: s-resize; height: 7px; width: 100%; bottom: -5px; left: 0; }
+.ui-resizable-e { cursor: e-resize; width: 7px; right: -5px; top: 0; height: 100%; }
+.ui-resizable-w { cursor: w-resize; width: 7px; left: -5px; top: 0; height: 100%; }
+.ui-resizable-se { cursor: se-resize; width: 12px; height: 12px; right: 1px; bottom: 1px; }
+.ui-resizable-sw { cursor: sw-resize; width: 9px; height: 9px; left: -5px; bottom: -5px; }
+.ui-resizable-nw { cursor: nw-resize; width: 9px; height: 9px; left: -5px; top: -5px; }
+.ui-resizable-ne { cursor: ne-resize; width: 9px; height: 9px; right: -5px; top: -5px;}
+.spinner {
+  margin: 0 auto;
+  padding-top:300px;
+  width: 70px;
+  text-align: center;
+}
+
+.spinner > div {
+  width: 18px;
+  height: 18px;
+  background-color: red;
+  border-radius: 100%;
+  display: inline-block;
+  -webkit-animation: bouncedelay 1.4s infinite ease-in-out;
+  animation: bouncedelay 1.4s infinite ease-in-out;
+   /* Prevent first frame from flickering when animation starts */
+   -webkit-animation-fill-mode: both;
+   animation-fill-mode: both;
+}
+
+.spinner .bounce1 {
+	-webkit-animation-delay: -0.32s;
+	animation-delay: -0.32s;
+}
+
+.spinner .bounce2 {
+	-webkit-animation-delay: -0.16s;
+	animation-delay: -0.16s;
+}
+
+@-webkit-keyframes bouncedelay {
+	0%, 80%, 100% { -webkit-transform: scale(0.0) }
+	40% { -webkit-transform: scale(1.0) }
+}
+
+@keyframes bouncedelay {
+	0%, 80%, 100% { 
+transform: scale(0.0);
+	   -webkit-transform: scale(0.0);
+	} 40% { 
+transform: scale(1.0);
+	   -webkit-transform: scale(1.0);
+	}
+}
