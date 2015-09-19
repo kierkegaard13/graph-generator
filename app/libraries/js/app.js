@@ -19,6 +19,7 @@ var dragging;
 
 var Graph = function(graph) {
 	var link, linkText, node, force, svg, container;
+    var highlighted = [];
 	var adj = [];
 	var nodes = [];
 	var links = [];
@@ -49,9 +50,9 @@ var Graph = function(graph) {
 		$('svg').remove();
 		link_mult = (typeof(link_mult) === 'undefined') ? 1 : link_mult;
 		force = d3.layout.force()
-			.charge(-3000)
+			.charge(-6000)
 			.linkDistance(200 * link_mult)
-			.linkStrength(.5)
+			.linkStrength(.2)
 			.size([width, height])
 			.links(links)
 			.nodes(nodes)
@@ -254,11 +255,50 @@ var Graph = function(graph) {
 		this.buildLinks(type);
 	};
 
+    this.findEdge = function(source, target) {
+        var item = null;
+        source = parseInt(source);
+        target = parseInt(target);
+        for(var i = 0; i < links.length; i++){
+            if(links[i].source.id === source && links[i].target.id === target){
+                item = links[i];
+                return {'dom': $('#link_' + source + '_' + target), 'item': item};
+            }else if(links[i].source.id === target && links[i].target.id === source){
+                item = links[i];
+                return {'dom': $('#link_' + target + '_' + source), 'item': item};
+            }
+        }
+        return null;
+    }
+
+    this.highlightEdge = function(source, target){
+        var edge = $('#link_' + source + '_' + target);
+        if(edge.length === 0)
+            edge = $('#link_' + target + '_' + source);
+        edge.find('.link-line').css('stroke', 'red');
+    }
+
+    this.highlightEdges = function(edges){
+        var edge;
+        for(var i = highlighted.length - 1; i >= 0; i--){
+            edge = this.findEdge(highlighted[i].source, highlighted[i].target);
+            if(edge){
+                edge.dom.find('.link-line').css('stroke', color(edge.item.type));
+            }
+            highlighted.pop();
+        }
+        for(var i = 0; i < edges.length; i++){
+            this.highlightEdge(edges[i].source, edges[i].target);
+            highlighted.push(edges[i]);
+        }
+    }
+
 	this.refreshGraph = function() {
 		link = container.selectAll('.link');
 		link = link.data(force.links());
 		link.enter().append('g')
 			.attr('class', 'link')
+            .attr('id', function(d) { return 'link_' + d.source.id + '_' + d.target.id; })
 			.append('line')
 			.attr('class', 'link-line')
 			.attr('stroke-width', 3)
@@ -343,7 +383,7 @@ $(document).on('ready', function() {
 	graph.refreshGraph();
 });
 
-$('#graph_submit').on('click', function(){
+$('#graph_randomize').on('click', function(){
 	var num, type, vertex_list = [];
 	num = $('#num_nodes').val();
 	type = $('#graph_type').val();
@@ -351,14 +391,21 @@ $('#graph_submit').on('click', function(){
 		vertex_list.push({id: i});
 	}
 	graph.buildNodes(vertex_list, type);
+});
+
+$('#graph_visualize').on('click', function(){
 	graph.refreshGraph();
 });
 
-function nodeBlur() {
-	d3.select(this).select('circle').transition()
-		.duration(200)
-		.attr('r', SMALL_RAD);
-}
+$('#graph_highlight').on('click', function(){
+    var edges;
+    edges = $('#highlight_edges').html().replace(/<\/div>/g,'').replace(/\n/g,'').split('<div>');
+    for(var i = 0; i < edges.length; i++){
+        edges[i].trim();
+        edges[i] = {'source': edges[i].split(' ')[0], 'target': edges[i].split(' ')[1]};
+    }
+    graph.highlightEdges(edges);
+});
 
 return graph;
 

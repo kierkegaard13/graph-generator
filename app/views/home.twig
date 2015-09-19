@@ -41,9 +41,15 @@
 				<input value="100" placeholder="Default: 100" id="max_w" name="max_w" class="form-control" type="text">
 			</div>
 		</div>
-		<div id="graph_data">
+        <div><strong>Graph Data</strong></div>
+		<div id="graph_data" contenteditable="true">
 		</div>
-		<button id="graph_submit" class="btn btn-primary">Refresh</button>
+        <div><strong>Highlight Edges</strong></div>
+		<div id="highlight_edges" contenteditable="true">
+		</div>
+		<button id="graph_randomize" title="Generate random list of nodes and edges" class="btn btn-primary">Randomize</button>
+		<button id="graph_visualize" title="Visualize graph data" class="btn btn-primary">Visualize</button>
+		<button id="graph_highlight" title="Highlight graph data" class="btn btn-primary">Highlight</button>
 	</div>
 	<div class="col-sm-9 graph_cont">
 	</div>
@@ -56,7 +62,7 @@
 <script src='https://cdnjs.cloudflare.com/ajax/libs/velocity/1.2.1/velocity.ui.min.js'></script>
 <script type="text/javascript">
 	document.writeln("<script type='text/javascript' src='{{base}}/app/libraries/js/bootstrap.min.js'><" + "/script>");
-	document.writeln("<script type='text/javascript' src='{{base}}/app/libraries/js/app.min.js'><" + "/script>");
+	document.writeln("<script type='text/javascript' src='{{base}}/app/libraries/js/app.js'><" + "/script>");
 </script>
 </body>
 </html>
