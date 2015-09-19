@@ -9,6 +9,8 @@ var SMALL_RAD = 15;
 // graph node radius when you've moused over it
 var BIG_RAD = 20;
 var color = d3.scale.category20();
+var EDGE_LIM = 1000;
+var visualized = 0;
 
 // used for determining whether interaction was a click or a drag
 var clicked;
@@ -285,7 +287,8 @@ var Graph = function(graph) {
 
     this.buildGraphFromInput = function(){
         var num_nodes, num_edges, edge, data = $('#graph_data').html();
-        data = data.replace(/<\/div>/g,'').split('<div>');
+        visualized = 1;
+        data = data.replace(/<\/div>/g,'').split(/<div[\s\w="-:;]*>/);
         if(data[0] === '')
             data.splice(0,1);
         num_nodes = parseInt(data[0].split(' ')[0]);
@@ -304,15 +307,17 @@ var Graph = function(graph) {
         for(var i = 0; i < num_nodes; i++)
             nodes.push({'id': i, 'x': width / 2, 'y': height / 2});
         for(var i = 1; i <= num_edges; i++){
-            data[i].trim();
-            edge = data[i].split(' ');
-            edge = {'source': parseInt(edge[0]), 'target': parseInt(edge[1]), 'weight': parseFloat(edge[2])};
-            adj[edge.source].push(edge.target);
-            adj[edge.target].push(edge.source);
-            links.push({'source': nodes[edge.source], 'target': nodes[edge.target], 'type': 0, 'weight': edge.weight});
-            linked_by_index = {};
-			linked_by_index[edge.source + '-' + edge.target] = 1;
-			linked_by_index[edge.target + '-' + edge.source] = 1;
+            if(data[i].length > 0){
+                data[i].trim();
+                edge = data[i].split(' ');
+                edge = {'source': parseInt(edge[0]), 'target': parseInt(edge[1]), 'weight': parseFloat(edge[2])};
+                adj[edge.source].push(edge.target);
+                adj[edge.target].push(edge.source);
+                links.push({'source': nodes[edge.source], 'target': nodes[edge.target], 'type': 0, 'weight': edge.weight});
+                linked_by_index = {};
+                linked_by_index[edge.source + '-' + edge.target] = 1;
+                linked_by_index[edge.target + '-' + edge.source] = 1;
+            }
         }
     };
 
@@ -437,6 +442,8 @@ var graph = new Graph();
 
 $(document).on('ready', function() {
 	var vertex_list = [];
+    visualized = 1;
+    $('#graph_visualize').hide();
 	for(var i = 0; i < 20; i++){
 		vertex_list.push({id: i});
 	}
@@ -446,6 +453,8 @@ $(document).on('ready', function() {
 
 $('#graph_build').on('click', function(){
 	var num, type, vertex_list = [];
+    visualized = 0;
+    $('#graph_visualize').show();
 	num = $('#num_nodes').val();
 	type = $('#graph_type').val();
 	for(var i = 0; i < num; i++){
@@ -455,17 +464,37 @@ $('#graph_build').on('click', function(){
 });
 
 $('#graph_visualize').on('click', function(){
+    console.log(graph.inspectLinks());
+    console.log(graph.inspectLinks().length);
+    console.log(visualized);
     if($('#graph_type').val() === 'input'){
         graph.buildGraphFromInput();
-        graph.refreshGraph();
+        if(graph.inspectLinks().length > EDGE_LIM){
+            $('#warning_modal').modal('show');
+        }else{
+            graph.refreshGraph();
+        }
     }else{
-        graph.refreshGraph();
+        if(visualized !== 1){
+            $('#graph_visualize').hide();
+            if(graph.inspectLinks().length > EDGE_LIM){
+                $('#warning_modal').modal('show');
+            }else{
+                visualized = 1;
+                graph.refreshGraph();
+            }
+        }
     }
+});
+
+$('#continue_visualizing').on('click', function(){
+    visualized = 1;
+    graph.refreshGraph();
 });
 
 $('#graph_highlight').on('click', function(){
     var edges;
-    edges = $('#highlight_edges').html().replace(/<\/div>/g,'').replace(/\n/g,'').split('<div>');
+    edges = $('#highlight_edges').html().replace(/<\/div>/g,'').replace(/\n/g,'').split(/<div[\s\w="-:;]*>/);
     for(var i = 0; i < edges.length; i++){
         edges[i].trim();
         edges[i] = {'source': edges[i].split(' ')[0], 'target': edges[i].split(' ')[1]};
@@ -474,13 +503,17 @@ $('#graph_highlight').on('click', function(){
 });
 
 $('#graph_type').on('change', function(){
+    visualized = 0;
     if($(this).val() === 'input'){
+        $('#graph_visualize').show();
         $('.opt').hide();
     }else if($(this).val() === 'custom'){
+        $('#graph_visualize').hide();
         $('.opt').show();
         $('.custom_hide').hide();
         $('.custom_opt').show();
     }else{
+        $('#graph_visualize').hide();
         $('.opt').show();
         $('.custom_hide').show();
         $('.custom_opt').hide();

@@ -15,6 +15,23 @@
 	<script src='//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.4/jquery.min.js'></script>
 </head>
 <body style="overflow:hidden;">
+<div class="modal fade" id="warning_modal" aria-hidden="false" tabindex="-1" role="dialog" aria-labelledby="warning_modalLabel">
+	<div class="modal-dialog modal-md" style="z-index:1050;">
+		<div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+				<h4 class="modal-title">Are you sure you want to visualize?</h4>
+			</div>
+            <div class="modal-body">
+                Visualizing may lag your computer or cause your browser to crash due to the high number of edges
+            </div>
+			<div class="modal-footer">
+				<button id="continue_visualizing" type="button" class="btn btn-primary" data-dismiss="modal">Yes</button>
+				<button type="button" class="btn" data-dismiss="modal">No</button>
+			</div>
+		</div>
+	</div>	
+</div>
 <div class="row" style="height:100%;">
 	<div class="col-sm-3 graph_info">
 		<div class="form-group" style="border:none;background-color:#ddd;">
@@ -71,7 +88,7 @@
 <script src='https://cdnjs.cloudflare.com/ajax/libs/velocity/1.2.1/velocity.ui.min.js'></script>
 <script type="text/javascript">
 	document.writeln("<script type='text/javascript' src='{{base}}/app/libraries/js/bootstrap.min.js'><" + "/script>");
-	document.writeln("<script type='text/javascript' src='{{base}}/app/libraries/js/app.js'><" + "/script>");
+	document.writeln("<script type='text/javascript' src='{{base}}/app/libraries/js/app.min.js'><" + "/script>");
 </script>
 </body>
 </html>
