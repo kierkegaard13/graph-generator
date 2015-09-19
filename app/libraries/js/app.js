@@ -100,8 +100,10 @@ var Graph = function(graph) {
 					for(var i = 0; i < bf; i++){
 						if(node_list.length > 0){
 							target_node = Math.floor(Math.random() * (node_list.length - 1));
-							links.push({source: nodes[Q[0].id], target: nodes[node_list[target_node].id],
-								 type: 0, weight: Math.floor((Math.random() * max_w) + min_w)});	
+							links.push({'source': nodes[Q[0].id],
+                                        'target': nodes[node_list[target_node].id],
+								        'type': 0,
+                                        'weight': Math.floor((Math.random() * max_w) + min_w)});	
 							adj[Q[0].id].push(node_list[target_node].id);
 							adj[node_list[target_node].id].push(Q[0].id);
 							Q.push(node_list[target_node]);
@@ -122,8 +124,10 @@ var Graph = function(graph) {
 					for(var i = 0; i < 2; i++){
 						if(node_list.length > 0){
 							target_node = Math.floor(Math.random() * (node_list.length - 1));
-							links.push({source: nodes[Q[0].id], target: nodes[node_list[target_node].id],
-								 type: 0, weight: Math.floor((Math.random() * max_w) + min_w)});	
+							links.push({'source': nodes[Q[0].id],
+                                        'target': nodes[node_list[target_node].id],
+								        'type': 0,
+                                        'weight': Math.floor((Math.random() * max_w) + min_w)});	
 							adj[Q[0].id].push(node_list[target_node].id);
 							adj[node_list[target_node].id].push(Q[0].id);
 							Q.push(node_list[target_node]);
@@ -156,8 +160,10 @@ var Graph = function(graph) {
 					for(var i = 0; i < edges; i++){
 						if(undiscovered.length > 0){
 							target_node = Math.floor(Math.random() * (undiscovered.length - 1));
-							links.push({source: nodes[source_node.id], target: undiscovered[target_node],
-								 type: 0, weight: Math.floor((Math.random() * max_w) + min_w)});	
+							links.push({'source': nodes[source_node.id],
+                                        'target': undiscovered[target_node],
+								        'type': 0,
+                                        'weight': Math.floor((Math.random() * max_w) + min_w)});	
 							adj[source_node.id].push(undiscovered[target_node].id);
 							adj[undiscovered[target_node].id].push(source_node.id);
 							undiscovered.splice(target_node, 1);
@@ -193,8 +199,10 @@ var Graph = function(graph) {
 					for(var i = 0; i < edges; i++){
 						if(undiscovered.length > 0){
 							target_node = Math.floor(Math.random() * (undiscovered.length - 1));
-							links.push({source: nodes[source_node.id], target: undiscovered[target_node],
-								 type: 0, weight: Math.floor((Math.random() * max_w) + min_w)});	
+							links.push({'source': nodes[source_node.id],
+                                        'target': undiscovered[target_node],
+								        'type': 0,
+                                        'weight': Math.floor((Math.random() * max_w) + min_w)});	
 							adj[source_node.id].push(undiscovered[target_node].id);
 							adj[undiscovered[target_node].id].push(source_node.id);
 							undiscovered.splice(target_node, 1);
@@ -212,12 +220,32 @@ var Graph = function(graph) {
 			case 'full':
 				for(var i = 0; i < nodes.length; i++){
 					for(var j = i + 1; j < nodes.length; j++){
-						links.push({source: nodes[i], target: nodes[j],
-							 type: 0, weight: Math.floor((Math.random() * max_w) + min_w)});
+						links.push({'source': nodes[i],
+                                    'target': nodes[j],
+							        'type': 0,
+                                    'weight': Math.floor((Math.random() * max_w) + min_w)});
 						adj[i].push(j);
 						adj[j].push(i);
 					}
 				}
+				break;
+			case 'custom':
+                var chance, prob = parseFloat($('#prob').val());
+				for(var i = 0; i < nodes.length; i++){
+					for(var j = i + 1; j < nodes.length; j++){
+                        chance = Math.random() < prob;
+                        if(chance === true){
+                            links.push({'source': nodes[i],
+                                        'target': nodes[j],
+                                        'type': 0,
+                                        'weight': Math.floor((Math.random() * max_w) + min_w)});
+                            adj[i].push(j);
+                            adj[j].push(i);
+                        }
+					}
+				}
+				break;
+			case 'input':
 				break;
 			default:
 				break;
@@ -254,6 +282,39 @@ var Graph = function(graph) {
 		}
 		this.buildLinks(type);
 	};
+
+    this.buildGraphFromInput = function(){
+        var num_nodes, num_edges, edge, data = $('#graph_data').html();
+        data = data.replace(/<\/div>/g,'').split('<div>');
+        if(data[0] === '')
+            data.splice(0,1);
+        num_nodes = parseInt(data[0].split(' ')[0]);
+        num_edges = parseInt(data[0].split(' ')[1]);
+		adj = [];
+		for(var i = 0; i < num_nodes; i++)
+			adj.push([]);
+        if(num_nodes < 50)
+            this.clearNodes();
+        else if(num_nodes < 100)
+           this.clearNodes(2);
+        else if(num_nodes < 500)
+           this.clearNodes(4);
+        else
+           this.clearNodes(8);
+        for(var i = 0; i < num_nodes; i++)
+            nodes.push({'id': i, 'x': width / 2, 'y': height / 2});
+        for(var i = 1; i <= num_edges; i++){
+            data[i].trim();
+            edge = data[i].split(' ');
+            edge = {'source': parseInt(edge[0]), 'target': parseInt(edge[1]), 'weight': parseFloat(edge[2])};
+            adj[edge.source].push(edge.target);
+            adj[edge.target].push(edge.source);
+            links.push({'source': nodes[edge.source], 'target': nodes[edge.target], 'type': 0, 'weight': edge.weight});
+            linked_by_index = {};
+			linked_by_index[edge.source + '-' + edge.target] = 1;
+			linked_by_index[edge.target + '-' + edge.source] = 1;
+        }
+    };
 
     this.findEdge = function(source, target) {
         var item = null;
@@ -383,7 +444,7 @@ $(document).on('ready', function() {
 	graph.refreshGraph();
 });
 
-$('#graph_randomize').on('click', function(){
+$('#graph_build').on('click', function(){
 	var num, type, vertex_list = [];
 	num = $('#num_nodes').val();
 	type = $('#graph_type').val();
@@ -394,7 +455,12 @@ $('#graph_randomize').on('click', function(){
 });
 
 $('#graph_visualize').on('click', function(){
-	graph.refreshGraph();
+    if($('#graph_type').val() === 'input'){
+        graph.buildGraphFromInput();
+        graph.refreshGraph();
+    }else{
+        graph.refreshGraph();
+    }
 });
 
 $('#graph_highlight').on('click', function(){
@@ -405,6 +471,20 @@ $('#graph_highlight').on('click', function(){
         edges[i] = {'source': edges[i].split(' ')[0], 'target': edges[i].split(' ')[1]};
     }
     graph.highlightEdges(edges);
+});
+
+$('#graph_type').on('change', function(){
+    if($(this).val() === 'input'){
+        $('.opt').hide();
+    }else if($(this).val() === 'custom'){
+        $('.opt').show();
+        $('.custom_hide').hide();
+        $('.custom_opt').show();
+    }else{
+        $('.opt').show();
+        $('.custom_hide').show();
+        $('.custom_opt').hide();
+    }
 });
 
 return graph;
