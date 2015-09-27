@@ -359,6 +359,38 @@ var Graph = function(graph) {
         }
     }
 
+    this.algo = function(name){
+        var that = this, data = $('#graph_data').html().replace(/<\/div>/g,'').replace(/\n/g,'').split(/<div[\s\w="-:;]*>/);
+        if(name === 'dijkstra'){
+            if(data[0] !== '')
+                data[0] = data[0] + ' ' + $('#start').val() + ' ' + $('#end').val();
+            else
+                data[1] = data[1] + ' ' + $('#start').val() + ' ' + $('#end').val();
+        }
+        console.log(data);
+        data = {
+            'name' : name,
+            'data' : data
+        }
+        $.ajax({
+            url: window.location.href.split('/')[0] + '/algo/',
+            data: data
+        }).done(function(data){
+            console.log(data);
+            var edges, str1 = "<div>", str2 = "</div>";
+            edges = data;
+            data = data.join("</div><div>");
+            str1 = str1.concat(data, str2);
+            for(var i = 0; i < edges.length; i++){
+                edges[i].trim();
+                edges[i] = {'source': edges[i].split(' ')[0], 'target': edges[i].split(' ')[1]};
+            }
+            if(name !== 'dijkstra')
+                that.highlightEdges(edges);
+            $('#highlight_edges').html(str1);
+        });
+    }
+
 	this.refreshGraph = function() {
 		link = container.selectAll('.link');
 		link = link.data(force.links());
@@ -518,6 +550,18 @@ $('#graph_type').on('change', function(){
         $('.custom_hide').show();
         $('.custom_opt').hide();
     }
+});
+
+$('#graph_run').on('click', function(){
+    var algo = $('#graph_algo').val();
+    graph.algo(algo);
+});
+
+$('#graph_algo').on('change', function(){
+    if($(this).val() === 'dijkstra')
+        $('#start').parents('.row').show();
+    else
+       $('#start').parents('.row').hide();
 });
 
 return graph;
