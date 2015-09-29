@@ -20,16 +20,18 @@ var dragging;
 // mapping feature names to ints that control edge coloring
 
 var Graph = function(graph) {
-	var link, linkText, labels, node, force, svg, container;
+	var drag, link, linkText, labels, node, force, svg,
+        container, total_edges, total_nodes, least_edges,
+        node_degree;
+    node_degree = 0;
+    total_nodes = 0;
+    total_edges = 0;
+    least_edges = -1;
     var highlighted = [];
 	var adj = [];
 	var nodes = [];
 	var links = [];
 	var linked_by_index = {};
-	var center = 0;
-	var oldCenter = -1;
-	var centerX = 0;
-	var centerY = 0;
 	var that = this;
 
 	var zoomed = function() {
@@ -48,12 +50,17 @@ var Graph = function(graph) {
 		return links;
 	};
 
-	this.constructForceLayout = function(link_mult) {
+	this.constructForceLayout = function() {
 		$('svg').remove();
-		link_mult = (typeof(link_mult) === 'undefined') ? 1 : link_mult;
 		force = d3.layout.force()
-			.charge(-6000)
-			.linkDistance(200 * link_mult)
+			.charge(function(d) {
+                    var charge = -2000 * (d.edges / least_edges);
+                    return charge;
+                })
+			.linkDistance(function(d) {
+                    console.log(nodes.node_degree, 100 * nodes.node_degree);
+                    return 80 * nodes.node_degree;
+                })
 			.linkStrength(.2)
 			.size([width, height])
 			.links(links)
@@ -65,12 +72,19 @@ var Graph = function(graph) {
 			.call(zoom)
 			.on('dblclick.zoom', null);
 		container = svg.append('g');
+        drag = force.drag()
+            .on('dragstart', dragstarted)
+            .on('dragend', dragended);
 	};
 
-	this.clearNodes = function(link_mult) {
+	this.clearNodes = function() {
 		nodes = [];
 		links = [];
-		this.constructForceLayout(link_mult);
+        total_nodes = 0;
+        total_edges = 0;
+        least_edges = -1;
+        node_degree = 0;
+		this.constructForceLayout();
 	};
 
 	this.refreshNodes = function() {
@@ -80,9 +94,21 @@ var Graph = function(graph) {
 	};
 
 	this.neighboring = function(a, b){
-		console.log(a, b);
 		return a === b || linked_by_index[a + '-' + b];
-	}
+	};
+
+    this.countNodes = function(){
+        total_nodes = nodes.length;
+        total_edges = links.length;
+        $.each(nodes, function(idx, val){
+            if(adj[val.id].length > 0 && (least_edges === -1 || adj[val.id].length < least_edges))
+                least_edges = adj[val.id].length;
+            node_degree += adj[val.id].length;
+            val.edges = adj[val.id].length;
+        });
+        node_degree = node_degree / total_nodes;
+        nodes.node_degree = node_degree;
+    };
 
 	this.buildLinks = function(type){
 		var min_w, max_w;
@@ -255,6 +281,7 @@ var Graph = function(graph) {
 		$('#graph_data').html('');
 		$('#graph_data').append('<div>' + nodes.length + ' ' + links.length + '</div>');
 		linked_by_index = {};
+        this.countNodes();
 		for(var i = 0; i < links.length; i++){
 			linked_by_index[links[i].source.id + '-' + links[i].target.id] = 1;
 			linked_by_index[links[i].target.id + '-' + links[i].source.id] = 1;
@@ -264,18 +291,9 @@ var Graph = function(graph) {
 
 	this.buildNodes = function(vertices, type) {
 		var position;
-		oldCenter = center;
-		center = 0;
-		if(type === 'sparse')
-			this.clearNodes(2);
-		else if(type === 'dense')
-			this.clearNodes(4);
-		else if(type === 'full')
-			this.clearNodes(8);
-		else{
+		if(type === 'tree' || type === 'btree')
 			vertices[0].group = 1;
-			this.clearNodes();
-		}
+        this.clearNodes();
 		for(var i = 0; i < vertices.length; i++){
 			var vertex = vertices[i];
 			vertex.x = width / 2;
@@ -367,7 +385,6 @@ var Graph = function(graph) {
             else
                 data[1] = data[1] + ' ' + $('#start').val() + ' ' + $('#end').val();
         }
-        console.log(data);
         data = {
             'name' : name,
             'data' : data
@@ -376,7 +393,6 @@ var Graph = function(graph) {
             url: window.location.href.split('/')[0] + '/algo/',
             data: data
         }).done(function(data){
-            console.log(data);
             var edges, str1 = "<div>", str2 = "</div>";
             edges = data;
             data = data.join("</div><div>");
@@ -401,8 +417,7 @@ var Graph = function(graph) {
 			.append('line')
 			.attr('class', 'link-line')
 			.attr('stroke-width', 3)
-			.style('stroke', function(d) { return color(d.type); })
-			.call(force.drag);
+			.style('stroke', function(d) { return color(d.type); });
 
 		linkText = container.selectAll(".link")
 			.append("text")
@@ -451,7 +466,7 @@ var Graph = function(graph) {
 						.duration(500)
 						.attr('opacity', 1);
 				})
-			.call(force.drag)
+			.call(drag)
             .append("circle")
 			.attr("class", "node-circle")
 			.attr("r", SMALL_RAD)
@@ -500,6 +515,15 @@ var Graph = function(graph) {
 				});
 	};
 
+    function dragstarted(d) {
+        d3.event.sourceEvent.stopPropagation();
+        d3.select(this).classed("dragging", true);
+    }
+
+    function dragended(d) {
+        d3.select(this).classed("dragging", false);
+    }
+
 };
 
 //Create initial graph
@@ -529,9 +553,6 @@ $('#graph_build').on('click', function(){
 });
 
 $('#graph_visualize').on('click', function(){
-    console.log(graph.inspectLinks());
-    console.log(graph.inspectLinks().length);
-    console.log(visualized);
     if($('#graph_type').val() === 'input'){
         graph.buildGraphFromInput();
         if(graph.inspectLinks().length > EDGE_LIM){
