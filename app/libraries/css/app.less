@@ -38,6 +38,10 @@
     border-radius:3px;
 }
 
+#graph_type:focus {
+    outline: none;
+}
+
 #graph_type_options {
     background-color: #fff;
     border-bottom-right-radius:3px;
@@ -58,5 +62,27 @@
 
 .graph_type_option:hover {
     cursor:pointer;
-    background-color:#ddd;
+    background-color:#ddd !important;
+}
+
+.collapse_cont {
+    position: relative;
+    background-color: #ccc;
+    padding: 10px;
+    margin: -10px -10px 10px;
+    cursor: pointer;
+}
+
+.collapse_toggle {
+    color: #333;
+    text-decoration: none;
+}
+
+.collapse_toggle:hover {
+    color: #333;
+    text-decoration: none;
+}
+
+.collapse {
+    margin-bottom: 20px;
 }

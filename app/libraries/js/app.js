@@ -10,7 +10,6 @@ var SMALL_RAD = 20;
 var BIG_RAD = 25;
 var color = d3.scale.category20();
 var EDGE_LIM = 1000;
-var visualized = 0;
 
 // used for determining whether interaction was a click or a drag
 var clicked;
@@ -20,6 +19,7 @@ var dragging;
 
 // used for selecting graph type
 var selected_option = -1;
+var prev_text = '';
 
 jQuery.expr[':'].icontains = function(a, i, m) {
     return jQuery(a).text().toUpperCase()
@@ -27,7 +27,7 @@ jQuery.expr[':'].icontains = function(a, i, m) {
 };
 
 var Graph = function(graph) {
-	var drag, link, linkText, labels, node, force, svg,
+	var drag, link, linkText, linkTextShadow, labels, node, force, svg,
         container, total_edges, total_nodes, least_edges,
         most_edges, node_degree;
     node_degree = 0;
@@ -288,8 +288,6 @@ var Graph = function(graph) {
 					}
 				}
 				break;
-			case 'input':
-				break;
 			default:
 				break;
 		}
@@ -320,7 +318,6 @@ var Graph = function(graph) {
 
     this.buildGraphFromInput = function(){
         var num_nodes, num_edges, edge, data = $('#graph_data').html();
-        visualized = 1;
         data = data.replace(/<\/div>/g,'').split(/<div[\s\w="-:;]*>/);
         if(data[0] === '')
             data.splice(0,1);
@@ -336,7 +333,10 @@ var Graph = function(graph) {
             if(data[i].length > 0){
                 data[i].trim();
                 edge = data[i].split(' ');
-                edge = {'source': parseInt(edge[0]), 'target': parseInt(edge[1]), 'weight': parseFloat(edge[2])};
+                if(edge.length < 3)
+                    edge = {'source': parseInt(edge[0]), 'target': parseInt(edge[1]), 'weight': undefined};
+                else
+                    edge = {'source': parseInt(edge[0]), 'target': parseInt(edge[1]), 'weight': parseFloat(edge[2])};
                 adj[edge.source].push(edge.target);
                 adj[edge.target].push(edge.source);
                 links.push({'source': nodes[edge.source], 'target': nodes[edge.target], 'type': 0, 'weight': edge.weight});
@@ -468,6 +468,18 @@ var Graph = function(graph) {
 			.attr('stroke-width', 4)
 			.style('stroke', function(d) { return color(d.type); });
 
+		linkTextShadow = container.selectAll(".link")
+			.append("text")
+			.attr("class", "link-label")
+			.attr("font-family", "Arial, Helvetica, sans-serif")
+			.style("font", "normal 18px Arial")
+            .style('stroke', 'white')
+            .style('stroke-width', '2.5')
+            .style('opacity', '.9')
+			.attr("dy", ".35em")
+			.attr("text-anchor", "middle")
+			.text(function(d) { return (typeof(d.weight) === undefined) ? '' : d.weight; });
+
 		linkText = container.selectAll(".link")
 			.append("text")
 			.attr("class", "link-label")
@@ -476,7 +488,7 @@ var Graph = function(graph) {
 			.style("font", "normal 18px Arial")
 			.attr("dy", ".35em")
 			.attr("text-anchor", "middle")
-			.text(function(d) { return d.weight; });
+			.text(function(d) { return (typeof(d.weight) === undefined) ? '' : d.weight; });
 
         node = container.selectAll('.node')
             .data(force.nodes())
@@ -578,6 +590,13 @@ var Graph = function(graph) {
 			.attr("y", function(d) {
 					return ((d.source.y + d.target.y)/2 + 15);
 				});
+
+		linkTextShadow.attr("x", function(d) {
+					return ((d.source.x + d.target.x)/2 + 15);
+				})
+			.attr("y", function(d) {
+					return ((d.source.y + d.target.y)/2 + 15);
+				});
 	};
 
     function dragstarted(d) {
@@ -596,22 +615,21 @@ var graph = new Graph();
 
 $(document).on('ready', function() {
 	var vertex_list = [];
-    visualized = 1;
-    $('#graph_visualize').hide();
 	for(var i = 0; i < 20; i++){
 		vertex_list.push({id: i});
 	}
-    $('#graph_type').focus();
+    $('#graph_type').text('Tree');
+    selected_option = 0;
 	graph.buildNodes(vertex_list, 'tree');
 	graph.refreshGraph();
 });
 
 $('#graph_build').on('click', function(){
     var option = $('.graph_type_option').eq(selected_option);
+    console.log(selected_option, option);
     if(option.hasClass('js_generated')){
+        console.log('hihi');
         var num, type, vertex_list = [];
-        visualized = 0;
-        $('#graph_visualize').show();
         num = $('#num_nodes').val();
         type = option.attr('value');
         for(var i = 0; i < num; i++){
@@ -620,34 +638,19 @@ $('#graph_build').on('click', function(){
         graph.buildNodes(vertex_list, type);
     }else{
         graph.networkGraph(option.attr('value'));
-        visualized = 0;
-        $('#graph_visualize').show();
     }
 });
 
 $('#graph_visualize').on('click', function(){
-    if(!$('.graph_type_option').eq(selected_option).hasClass('js_generated')){
-        graph.buildGraphFromInput();
-        if(graph.inspectLinks().length > EDGE_LIM){
-            $('#warning_modal').modal('show');
-        }else{
-            graph.refreshGraph();
-        }
+    graph.buildGraphFromInput();
+    if(graph.inspectLinks().length > EDGE_LIM){
+        $('#warning_modal').modal('show');
     }else{
-        if(visualized !== 1){
-            $('#graph_visualize').hide();
-            if(graph.inspectLinks().length > EDGE_LIM){
-                $('#warning_modal').modal('show');
-            }else{
-                visualized = 1;
-                graph.refreshGraph();
-            }
-        }
+        graph.refreshGraph();
     }
 });
 
 $('#continue_visualizing').on('click', function(){
-    visualized = 1;
     graph.refreshGraph();
 });
 
@@ -675,22 +678,24 @@ $('#graph_algo').on('change', function(){
 
 $('#graph_type').on('focus', function(){
     $('#graph_type_options').show();
+    prev_text = $('#graph_type').text();
+    $('#graph_type').text('');
     $('.graph_type_option:icontains("' + $(this).text().trim() + '")').show();
 });
 
 $('#graph_type').on('blur', function(){
+    if($('#graph_type').text() === '')
+        $('#graph_type').text(prev_text);
     $('#graph_type_options').hide();
 });
 
 $('.graph_type_option').on('mousedown', function(e){
-    visualized = 0;
     $('#graph_type').blur();
     $('#graph_type').text($(this).text());
+    selected_option = $(this).index();
     if($(this).attr('value') === 'input'){
-        $('#graph_visualize').show();
         $('.opt').hide();
     }else if($(this).attr('value') === 'custom'){
-        $('#graph_visualize').hide();
         $('.opt').show();
         $('.custom_hide').hide();
         $('.custom_opt').show();
@@ -699,7 +704,6 @@ $('.graph_type_option').on('mousedown', function(e){
         $('.nx_opt').hide();
         $('.num_opt').hide();
     }else{
-        $('#graph_visualize').hide();
         $('.opt').show();
         $('.custom_hide').show();
         $('.custom_opt').hide();
@@ -710,15 +714,12 @@ $('#graph_type').on('keyup', function(e){
     var options, option;
     if(e.keyCode === 13){ //enter
         if(selected_option !== -1){
-            visualized = 0;
             option = $('.graph_type_option').eq(selected_option);
             $('#graph_type').blur();
             $('#graph_type').text(option.text());
             if(option.attr('value') === 'input'){
-                $('#graph_visualize').show();
                 $('.opt').hide();
             }else if(option.attr('value') === 'custom'){
-                $('#graph_visualize').hide();
                 $('.opt').show();
                 $('.custom_hide').hide();
                 $('.custom_opt').show();
@@ -727,7 +728,6 @@ $('#graph_type').on('keyup', function(e){
                 $('.nx_opt').hide();
                 $('.num_opt').hide();
             }else{
-                $('#graph_visualize').hide();
                 $('.opt').show();
                 $('.custom_hide').show();
                 $('.custom_opt').hide();
@@ -751,6 +751,18 @@ $('#graph_type').on('keyup', function(e){
     /* out of view top */
     if(option.position().top < 0)
         options.scrollTop(options.scrollTop() + option.position().top);
+});
+
+$('.collapse_toggle').on('click', function(){
+    return false;
+});
+
+$('.collapse_cont').on('click', function(){
+    $($(this).find('a').attr('href')).collapse('toggle');
+    if($(this).hasClass('dropup'))
+        $(this).removeClass('dropup');
+    else
+        $(this).addClass('dropup');
 });
 
 return graph;

@@ -9,4 +9,4 @@ else:
     G = getattr(nx, sys.argv[1])()
 print(str(G.number_of_nodes()) + ' ' + str(G.number_of_edges()))
 for edge in G.edges():
-    print(str(edge[0]) + ' ' + str(edge[1]) + ' 1')
+    print(str(edge[0]) + ' ' + str(edge[1]))
