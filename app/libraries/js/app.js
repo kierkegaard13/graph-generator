@@ -22,11 +22,12 @@ var dragging;
 var Graph = function(graph) {
 	var drag, link, linkText, labels, node, force, svg,
         container, total_edges, total_nodes, least_edges,
-        node_degree;
+        most_edges, node_degree;
     node_degree = 0;
     total_nodes = 0;
     total_edges = 0;
     least_edges = -1;
+    most_edges = -1;
     var highlighted = [];
 	var adj = [];
 	var nodes = [];
@@ -53,15 +54,22 @@ var Graph = function(graph) {
 	this.constructForceLayout = function() {
 		$('svg').remove();
         var k = Math.sqrt(nodes.length / (width * height));
+        console.log('--------------------');
 		force = d3.layout.force()
 			.charge(function(d) {
-                    var charge = -2000 * (d.edges / least_edges);
+                    var charge = -3000 * (least_edges / d.edges) - 200;
+                    console.log(d.id, charge);
                     return charge;
                 })
 			.linkDistance(function(d) {
-                    return 80 * nodes.node_degree;
+                    var degree, ratio;
+                    degree = ((d.source.edges / least_edges) + (d.target.edges / least_edges)) / 2;
+                    ratio = .9 / (most_edges / least_edges);
+                    degree *= ratio;
+                    if(degree > 1) degree = 1;
+                    return (80 * nodes.node_degree) * (1.2 - degree);
                 })
-			.linkStrength(.6)
+			.linkStrength(.8)
 			.size([width, height])
 			.links(links)
 			.nodes(nodes)
@@ -83,6 +91,7 @@ var Graph = function(graph) {
         total_nodes = 0;
         total_edges = 0;
         least_edges = -1;
+        most_edges = -1;
         node_degree = 0;
 	};
 
@@ -102,6 +111,8 @@ var Graph = function(graph) {
         $.each(nodes, function(idx, val){
             if(adj[val.id].length > 0 && (least_edges === -1 || adj[val.id].length < least_edges))
                 least_edges = adj[val.id].length;
+            if(adj[val.id].length > 0 && (most_edges === -1 || adj[val.id].length > most_edges))
+                most_edges = adj[val.id].length;
             node_degree += adj[val.id].length;
             val.edges = adj[val.id].length;
         });
@@ -357,20 +368,42 @@ var Graph = function(graph) {
         return null;
     }
 
+    this.dullEdge = function(source, target){
+        var edge = $('#link_' + source + '_' + target);
+        if(edge.length === 0)
+            edge = $('#link_' + target + '_' + source);
+        edge.find('.link-line').attr('opacity', .2);
+        edge.find('.link-line').attr('dulled', 1);
+    }
+
     this.highlightEdge = function(source, target){
         var edge = $('#link_' + source + '_' + target);
         if(edge.length === 0)
             edge = $('#link_' + target + '_' + source);
+        edge.find('.link-line').attr('opacity', 1);
+        edge.find('.link-line').attr('dulled', '');
         edge.find('.link-line').css('stroke', 'red');
     }
 
     this.highlightEdges = function(edges){
         var edge;
+        if(edges.length === 1){
+            for(var i = 0; i < links.length; i++){
+                edge = this.findEdge(links[i].source.id, links[i].target.id);
+                if(edge){
+                    edge.dom.find('.link-line').css('stroke', color(edge.item.type));
+                    edge.dom.find('.link-line').attr('opacity', 1);
+                    edge.dom.find('.link-line').attr('dulled', '');
+                }
+            }
+        }else{
+            for(var i = 0; i < links.length; i++)
+                this.dullEdge(links[i].source.id, links[i].target.id);
+        }
         for(var i = highlighted.length - 1; i >= 0; i--){
             edge = this.findEdge(highlighted[i].source, highlighted[i].target);
-            if(edge){
+            if(edge)
                 edge.dom.find('.link-line').css('stroke', color(edge.item.type));
-            }
             highlighted.pop();
         }
         for(var i = 0; i < edges.length; i++){
@@ -463,13 +496,19 @@ var Graph = function(graph) {
 						.transition()
 						.duration(500)
 						.attr('opacity', function(o){
-							return that.neighboring(d.id, o.id) ? 1 : .3;		
+							return that.neighboring(d.id, o.id) ? 1 : .2;		
 						});
 					container.selectAll('.link-line')
 						.transition()
 						.duration(500)
 						.attr('opacity', function(o){
-							return o.source.id == d.id || o.target.id == d.id ? 1 : .3;
+							return o.source.id == d.id || o.target.id == d.id ? 1 : .2;
+						});
+					container.selectAll('.link-label')
+						.transition()
+						.duration(500)
+						.attr('display', function(o){
+							return o.source.id == d.id || o.target.id == d.id ? '' : 'none';
 						});
 				})
 			.on('mouseout', function(d){
@@ -484,7 +523,17 @@ var Graph = function(graph) {
 					container.selectAll('.link-line')
 						.transition()
 						.duration(500)
-						.attr('opacity', 1);
+						.attr('opacity', function(o){
+                                var edge = that.findEdge(o.source.id, o.target.id).dom.find('.link-line');
+                                if(edge.attr('dulled') != 1)
+                                    return 1;
+                                else
+                                    return .2;
+                            });
+					container.selectAll('.link-label')
+						.transition()
+						.duration(500)
+						.attr('display', '');
 				})
 			.call(drag)
             .append("circle")
