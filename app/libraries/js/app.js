@@ -4,10 +4,10 @@ var width = $('.graph_cont').width(),
 	height = $('.graph_cont').height();
 
 // typical graph node radius
-var SMALL_RAD = 15;
+var SMALL_RAD = 20;
 
 // graph node radius when you've moused over it
-var BIG_RAD = 20;
+var BIG_RAD = 25;
 var color = d3.scale.category20();
 var EDGE_LIM = 1000;
 var visualized = 0;
@@ -20,7 +20,7 @@ var dragging;
 // mapping feature names to ints that control edge coloring
 
 var Graph = function(graph) {
-	var link, linkText, node, force, svg, container;
+	var link, linkText, labels, node, force, svg, container;
     var highlighted = [];
 	var adj = [];
 	var nodes = [];
@@ -392,9 +392,10 @@ var Graph = function(graph) {
     }
 
 	this.refreshGraph = function() {
-		link = container.selectAll('.link');
-		link = link.data(force.links());
-		link.enter().append('g')
+		link = container.selectAll('.link')
+            .data(force.links())
+		    .enter()
+            .append('g')
 			.attr('class', 'link')
             .attr('id', function(d) { return 'link_' + d.source.id + '_' + d.target.id; })
 			.append('line')
@@ -403,25 +404,26 @@ var Graph = function(graph) {
 			.style('stroke', function(d) { return color(d.type); })
 			.call(force.drag);
 
-		linkText = svg.selectAll(".link")
+		linkText = container.selectAll(".link")
 			.append("text")
 			.attr("class", "link-label")
 			.attr("font-family", "Arial, Helvetica, sans-serif")
 			.attr("fill", "Black")
-			.style("font", "normal 16px Arial")
+			.style("font", "normal 18px Arial")
 			.attr("dy", ".35em")
 			.attr("text-anchor", "middle")
 			.text(function(d) { return d.weight; });
 
-		node = container.selectAll('.node');
-		node = node.data(force.nodes());
-		node.enter().insert("circle", ".cursor")
-			.attr('title', 'hi')
-			.attr("class", "node")
-			.attr("r", SMALL_RAD)
-			.attr('id', function(d) { return 'node_' + d.id; })
-			.style('fill', function(d) { return color(d.group); })
+        node = container.selectAll('.node')
+            .data(force.nodes())
+            .enter()
+            .append('g')
+            .attr('class', 'node')
 			.on('mouseover', function(d){
+                    container.selectAll('#node_' + d.id)
+                        .transition()
+                        .duration(500)
+                        .attr('r', BIG_RAD);
 					container.selectAll('.node')
 						.transition()
 						.duration(500)
@@ -435,7 +437,11 @@ var Graph = function(graph) {
 							return o.source.id == d.id || o.target.id == d.id ? 1 : .3;
 						});
 				})
-			.on('mouseout', function(){
+			.on('mouseout', function(d){
+                    container.selectAll('#node_' + d.id)
+                        .transition()
+                        .duration(500)
+                        .attr('r', SMALL_RAD);
 					container.selectAll('.node')
 						.transition()
 						.duration(500)
@@ -445,19 +451,46 @@ var Graph = function(graph) {
 						.duration(500)
 						.attr('opacity', 1);
 				})
-			.call(force.drag);
+			.call(force.drag)
+            .append("circle")
+			.attr("class", "node-circle")
+			.attr("r", SMALL_RAD)
+			.attr('id', function(d) { return 'node_' + d.id; })
+			.style('fill', function(d) { 
+                    if(d.group === 1)
+                        return '#024dd9';
+                    else
+                        return '#6c28f7';
+                });
+
+        labels = container.selectAll('.node')
+            .append('text')
+			.attr("class", "node-label")
+			.attr("font-family", "Arial, Helvetica, sans-serif")
+			.attr("fill", "white")
+			.style("font", "normal 18px Arial")
+			.attr("dy", ".35em")
+			.attr("text-anchor", "middle")
+            .text(function(d) { return d.id; });
 
 		force.start();
 	};
 
 	this.tick = function(event) {
-		node.attr("cx", function(d) { return d.x; })
+		container.selectAll('.node-circle').attr("cx", function(d) { return d.x; })
 			.attr("cy", function(d) { return d.y; });
 
 		container.selectAll('.link-line').attr('x1', function(d) { return d.source.x; })
 			.attr('y1', function(d) { return d.source.y; })
 			.attr('x2', function(d) { return d.target.x; })
 			.attr('y2', function(d) { return d.target.y; });
+
+        labels.attr("x", function(d) {
+                    return d.x;
+                })
+            .attr("y", function(d) {
+                    return d.y;
+                });
 
 		linkText.attr("x", function(d) {
 					return ((d.source.x + d.target.x)/2 + 15);
@@ -559,9 +592,9 @@ $('#graph_run').on('click', function(){
 
 $('#graph_algo').on('change', function(){
     if($(this).val() === 'dijkstra')
-        $('#start').parents('.row').show();
+        $('#start').closest('.row').show();
     else
-       $('#start').parents('.row').hide();
+       $('#start').closest('.row').hide();
 });
 
 return graph;
