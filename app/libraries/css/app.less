@@ -26,5 +26,37 @@
 	border: solid 1px #ccc;
 	border-radius: 3px;
 	margin-bottom: 15px;
+    padding: 5px 15px;
 }
 
+#graph_type {
+    width:100%;
+    background-color:#fff;
+    height:30px;
+    padding:5px 15px;
+    overflow:hidden;
+    border-radius:3px;
+}
+
+#graph_type_options {
+    background-color: #fff;
+    border-bottom-right-radius:3px;
+    border-bottom-left-radius:3px;
+    border-top: 1px solid #ddd;
+    overflow:auto;
+    width:100%;
+    position:absolute;
+    z-index:10;
+    max-height:250px;
+    box-shadow:#aaa 0 2px 5px 0;
+}
+
+.graph_type_option {
+    padding: 5px 15px;
+    display:none;
+}
+
+.graph_type_option:hover {
+    cursor:pointer;
+    background-color:#ddd;
+}

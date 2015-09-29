@@ -17,7 +17,14 @@ var clicked;
 
 // indicates whether the graph is currently being dragged/panned
 var dragging;
-// mapping feature names to ints that control edge coloring
+
+// used for selecting graph type
+var selected_option = -1;
+
+jQuery.expr[':'].icontains = function(a, i, m) {
+    return jQuery(a).text().toUpperCase()
+        .indexOf(m[3].toUpperCase()) >= 0;
+};
 
 var Graph = function(graph) {
 	var drag, link, linkText, labels, node, force, svg,
@@ -54,11 +61,9 @@ var Graph = function(graph) {
 	this.constructForceLayout = function() {
 		$('svg').remove();
         var k = Math.sqrt(nodes.length / (width * height));
-        console.log('--------------------');
 		force = d3.layout.force()
 			.charge(function(d) {
                     var charge = -3000 * (least_edges / d.edges) - 200;
-                    console.log(d.id, charge);
                     return charge;
                 })
 			.linkDistance(function(d) {
@@ -297,11 +302,6 @@ var Graph = function(graph) {
 			linked_by_index[links[i].target.id + '-' + links[i].source.id] = 1;
 			$('#graph_data').append('<div>' + links[i].source.id + ' ' + links[i].target.id + ' ' + links[i].weight + '</div>');
 		}
-        console.log(adj);
-        console.log(nodes);
-        console.log(links);
-        console.log(linked_by_index);
-        console.log('============================');
 	}
 
 	this.buildNodes = function(vertices, type) {
@@ -346,10 +346,6 @@ var Graph = function(graph) {
             }
         }
         this.countNodes();
-        console.log(adj);
-        console.log(nodes);
-        console.log(links);
-        console.log(linked_by_index);
     };
 
     this.findEdge = function(source, target) {
@@ -605,30 +601,32 @@ $(document).on('ready', function() {
 	for(var i = 0; i < 20; i++){
 		vertex_list.push({id: i});
 	}
+    $('#graph_type').focus();
 	graph.buildNodes(vertex_list, 'tree');
 	graph.refreshGraph();
 });
 
 $('#graph_build').on('click', function(){
-    if($('#graph_type option:selected').hasClass('js_generated')){
+    var option = $('.graph_type_option').eq(selected_option);
+    if(option.hasClass('js_generated')){
         var num, type, vertex_list = [];
         visualized = 0;
         $('#graph_visualize').show();
         num = $('#num_nodes').val();
-        type = $('#graph_type').val();
+        type = option.attr('value');
         for(var i = 0; i < num; i++){
             vertex_list.push({id: i});
         }
         graph.buildNodes(vertex_list, type);
     }else{
-        graph.networkGraph($('#graph_type').val());
+        graph.networkGraph(option.attr('value'));
         visualized = 0;
         $('#graph_visualize').show();
     }
 });
 
 $('#graph_visualize').on('click', function(){
-    if($('#graph_type').val() === 'input' || !$('#graph_type option:selected').hasClass('js_generated')){
+    if(!$('.graph_type_option').eq(selected_option).hasClass('js_generated')){
         graph.buildGraphFromInput();
         if(graph.inspectLinks().length > EDGE_LIM){
             $('#warning_modal').modal('show');
@@ -663,17 +661,40 @@ $('#graph_highlight').on('click', function(){
     graph.highlightEdges(edges);
 });
 
-$('#graph_type').on('change', function(){
+$('#graph_run').on('click', function(){
+    var algo = $('#graph_algo').val();
+    graph.algo(algo);
+});
+
+$('#graph_algo').on('change', function(){
+    if($(this).val() === 'dijkstra')
+        $('#start').closest('.row').show();
+    else
+       $('#start').closest('.row').hide();
+});
+
+$('#graph_type').on('focus', function(){
+    $('#graph_type_options').show();
+    $('.graph_type_option:icontains("' + $(this).text().trim() + '")').show();
+});
+
+$('#graph_type').on('blur', function(){
+    $('#graph_type_options').hide();
+});
+
+$('.graph_type_option').on('mousedown', function(e){
     visualized = 0;
-    if($(this).val() === 'input'){
+    $('#graph_type').blur();
+    $('#graph_type').text($(this).text());
+    if($(this).attr('value') === 'input'){
         $('#graph_visualize').show();
         $('.opt').hide();
-    }else if($(this).val() === 'custom'){
+    }else if($(this).attr('value') === 'custom'){
         $('#graph_visualize').hide();
         $('.opt').show();
         $('.custom_hide').hide();
         $('.custom_opt').show();
-    }else if($('#graph_type option:selected').hasClass('num_fixed')){
+    }else if($(this).hasClass('num_fixed')){
         $('.opt').show();
         $('.nx_opt').hide();
         $('.num_opt').hide();
@@ -685,16 +706,51 @@ $('#graph_type').on('change', function(){
     }
 });
 
-$('#graph_run').on('click', function(){
-    var algo = $('#graph_algo').val();
-    graph.algo(algo);
-});
-
-$('#graph_algo').on('change', function(){
-    if($(this).val() === 'dijkstra')
-        $('#start').closest('.row').show();
-    else
-       $('#start').closest('.row').hide();
+$('#graph_type').on('keyup', function(e){
+    var options, option;
+    if(e.keyCode === 13){ //enter
+        if(selected_option !== -1){
+            visualized = 0;
+            option = $('.graph_type_option').eq(selected_option);
+            $('#graph_type').blur();
+            $('#graph_type').text(option.text());
+            if(option.attr('value') === 'input'){
+                $('#graph_visualize').show();
+                $('.opt').hide();
+            }else if(option.attr('value') === 'custom'){
+                $('#graph_visualize').hide();
+                $('.opt').show();
+                $('.custom_hide').hide();
+                $('.custom_opt').show();
+            }else if(option.hasClass('num_fixed')){
+                $('.opt').show();
+                $('.nx_opt').hide();
+                $('.num_opt').hide();
+            }else{
+                $('#graph_visualize').hide();
+                $('.opt').show();
+                $('.custom_hide').show();
+                $('.custom_opt').hide();
+            }
+        }
+    }else if(e.keyCode === 38){ // up
+        selected_option = (selected_option < 1) ? $('.graph_type_option').length - 1 : selected_option - 1;
+    }else if(e.keyCode === 40){ //down
+        selected_option = (selected_option === $('.graph_type_option').length - 1) ? 0 : selected_option + 1;
+    }else{
+        $('.graph_type_option').hide();
+        $('.graph_type_option:icontains("' + $(this).text().trim() + '")').show();
+    }
+    options = $('#graph_type_options');
+    option = $('.graph_type_option').eq(selected_option);
+    $('.graph_type_option').css('background-color','#fff');
+    option.css('background-color', '#ddd'); 
+    /* out of view bottom */
+    if(options.height() < option.position().top + option.outerHeight())
+        options.scrollTop(options.scrollTop() + ((option.position().top + option.outerHeight()) - options.height()));
+    /* out of view top */
+    if(option.position().top < 0)
+        options.scrollTop(options.scrollTop() + option.position().top);
 });
 
 return graph;

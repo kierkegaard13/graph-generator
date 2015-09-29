@@ -9,10 +9,12 @@
         <title>Graph Generator</title>
 	<link rel="icon" href="{{base}}/GavinWeb.ico" type="image/x-icon">
 	<link href='http://fonts.googleapis.com/css?family=Roboto:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
-        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" />
-        <link rel="stylesheet" href="{{base}}/app/libraries/css/app.min.css" />
-        {% block styles %}{% endblock %}
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="{{base}}/app/libraries/css/app.min.css" />
+    <link rel="stylesheet" href="{{base}}/app/libraries/css/jquery.mCustomScrollbar.min.css" />
+    {% block styles %}{% endblock %}
 	<script src='//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.4/jquery.min.js'></script>
+    <script src='{{base}}/app/libraries/js/jquery.mCustomScrollbar.concat.min.js'></script>
 </head>
 <body style="overflow:hidden;">
 <div class="modal fade" id="warning_modal" aria-hidden="false" tabindex="-1" role="dialog" aria-labelledby="warning_modalLabel">
@@ -34,26 +36,27 @@
 </div>
 <div class="row" style="height:100%;">
 	<div class="col-sm-3 graph_info">
-		<div class="form-group" style="border:none;background-color:#ddd;">
+        <div class="form-group" style="position:relative;"> 
 			<label for="graph_type">Type</label>
-			<select id="graph_type" name="graph_type" class="form-control">
-				<option class='js_generated' value="tree">Tree</option>
-				<option class='js_generated' value="btree">Binary Tree</option>
-				<option class='js_generated' value="sparse">Sparse</option>
-				<option class='js_generated' value="dense">Dense</option>
-				<option class='js_generated' value="full">Fully Connected</option>
-				<option class='num_fixed' value="input">Manual Input</option>
-				<option class='js_generated' value="custom">Custom</option>
-				<option class='num_fixed' value="petersen_graph">Petersen</option>
-				<option class='num_fixed' value="house_graph">House</option>
-				<option class='num_fixed' value="diamond_graph">Diamond</option>
-				<option class='num_fixed' value="cubical_graph">Cubical</option>
-				<option class='num_fixed' value="sedgewick_maze_graph">Sedgewick Maze</option>
-				<option class='num_fixed' value="tutte_graph">Tutte</option>
-				<option class='num_fixed' value="tetrahedral_graph">Tetrahedral</option>
-				<option class='num_fixed' value="krackhardt_kite_graph">Krackhardt Kite</option>
-			</select>
-		</div>
+            <div id="graph_type" contenteditable="true">
+            </div>
+            <div id="graph_type_options" style="display:none;">
+				<div class='graph_type_option js_generated' value="tree">Tree</div>
+				<div class='graph_type_option js_generated' value="btree">Binary Tree</div>
+				<div class='graph_type_option js_generated' value="sparse">Sparse</div>
+				<div class='graph_type_option js_generated' value="dense">Dense</div>
+				<div class='graph_type_option js_generated' value="full">Fully Connected</div>
+				<div class='graph_type_option js_generated' value="custom">Custom</div>
+				<div class='graph_type_option num_fixed' value="petersen_graph">Petersen</div>
+				<div class='graph_type_option num_fixed' value="house_graph">House</div>
+				<div class='graph_type_option num_fixed' value="diamond_graph">Diamond</div>
+				<div class='graph_type_option num_fixed' value="cubical_graph">Cubical</div>
+				<div class='graph_type_option num_fixed' value="sedgewick_maze_graph">Sedgewick Maze</div>
+				<div class='graph_type_option num_fixed' value="tutte_graph">Tutte</div>
+				<div class='graph_type_option num_fixed' value="tetrahedral_graph">Tetrahedral</div>
+				<div class='graph_type_option num_fixed' value="krackhardt_kite_graph">Krackhardt Kite</div>
+            </div>
+        </div>
 		<div class="form-group opt num_opt">
 			<label for="num_nodes">No. of nodes</label>
 			<input value="20" placeholder="Default: 20" id="num_nodes" name="num_nodes" class="form-control" type="text">
@@ -89,13 +92,13 @@
 				<input value="-1" placeholder="Default: -1" id="end" name="end" class="form-control" type="text">
 			</div>
 		</div>
-        <div><strong>Graph Data</strong></div>
+        <div><strong>Edge List</strong></div>
         <div style="font-size:14px;color:#555;margin-bottom:5px;">
-            Nodes must be 0-indexed
+            Nodes must be 0-indexed if manually input
         </div>
 		<div id="graph_data" contenteditable="true">
 		</div>
-        <div><strong>Highlight Edges / Algorithm Data</strong></div>
+        <div><strong>Highlighted Edges / Algorithm Data</strong></div>
 		<div id="highlight_edges" contenteditable="true">
 		</div>
 		<button id="graph_build" title="Generate list of nodes and edges" class="btn btn-primary opt">Build</button>
