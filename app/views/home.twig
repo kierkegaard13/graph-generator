@@ -37,24 +37,32 @@
 		<div class="form-group" style="border:none;background-color:#ddd;">
 			<label for="graph_type">Type</label>
 			<select id="graph_type" name="graph_type" class="form-control">
-				<option value="tree">Tree</option>
-				<option value="btree">Binary Tree</option>
-				<option value="sparse">Sparse</option>
-				<option value="dense">Dense</option>
-				<option value="full">Fully Connected</option>
-				<option value="input">Manual Input</option>
-				<option value="custom">Custom</option>
+				<option class='js_generated' value="tree">Tree</option>
+				<option class='js_generated' value="btree">Binary Tree</option>
+				<option class='js_generated' value="sparse">Sparse</option>
+				<option class='js_generated' value="dense">Dense</option>
+				<option class='js_generated' value="full">Fully Connected</option>
+				<option class='num_fixed' value="input">Manual Input</option>
+				<option class='js_generated' value="custom">Custom</option>
+				<option class='num_fixed' value="petersen_graph">Petersen</option>
+				<option class='num_fixed' value="house_graph">House</option>
+				<option class='num_fixed' value="diamond_graph">Diamond</option>
+				<option class='num_fixed' value="cubical_graph">Cubical</option>
+				<option class='num_fixed' value="sedgewick_maze_graph">Sedgewick Maze</option>
+				<option class='num_fixed' value="tutte_graph">Tutte</option>
+				<option class='num_fixed' value="tetrahedral_graph">Tetrahedral</option>
+				<option class='num_fixed' value="krackhardt_kite_graph">Krackhardt Kite</option>
 			</select>
 		</div>
-		<div class="form-group opt">
+		<div class="form-group opt num_opt">
 			<label for="num_nodes">No. of nodes</label>
 			<input value="20" placeholder="Default: 20" id="num_nodes" name="num_nodes" class="form-control" type="text">
 		</div>
-		<div class="form-group opt custom_opt" style="display:none;">
+		<div class="form-group opt custom_opt nx_opt" style="display:none;">
 			<label for="prob">Probability of edge inclusion</label>
 			<input value=".5" placeholder="Default: .5" id="prob" name="prob" class="form-control" type="text">
 		</div>
-		<div class="row opt">
+		<div class="row opt nx_opt">
 			<div class="form-group col-sm-6">
 				<label for="min_w">Min Weight</label>
 				<input value="1" placeholder="Default: 1" id="min_w" name="min_w" class="form-control" type="text">

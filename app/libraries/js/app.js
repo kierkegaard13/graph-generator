@@ -52,16 +52,16 @@ var Graph = function(graph) {
 
 	this.constructForceLayout = function() {
 		$('svg').remove();
+        var k = Math.sqrt(nodes.length / (width * height));
 		force = d3.layout.force()
 			.charge(function(d) {
                     var charge = -2000 * (d.edges / least_edges);
                     return charge;
                 })
 			.linkDistance(function(d) {
-                    console.log(nodes.node_degree, 100 * nodes.node_degree);
                     return 80 * nodes.node_degree;
                 })
-			.linkStrength(.2)
+			.linkStrength(.6)
 			.size([width, height])
 			.links(links)
 			.nodes(nodes)
@@ -84,7 +84,6 @@ var Graph = function(graph) {
         total_edges = 0;
         least_edges = -1;
         node_degree = 0;
-		this.constructForceLayout();
 	};
 
 	this.refreshNodes = function() {
@@ -287,6 +286,11 @@ var Graph = function(graph) {
 			linked_by_index[links[i].target.id + '-' + links[i].source.id] = 1;
 			$('#graph_data').append('<div>' + links[i].source.id + ' ' + links[i].target.id + ' ' + links[i].weight + '</div>');
 		}
+        console.log(adj);
+        console.log(nodes);
+        console.log(links);
+        console.log(linked_by_index);
+        console.log('============================');
 	}
 
 	this.buildNodes = function(vertices, type) {
@@ -314,14 +318,7 @@ var Graph = function(graph) {
 		adj = [];
 		for(var i = 0; i < num_nodes; i++)
 			adj.push([]);
-        if(num_nodes < 50)
-            this.clearNodes();
-        else if(num_nodes < 100)
-           this.clearNodes(2);
-        else if(num_nodes < 500)
-           this.clearNodes(4);
-        else
-           this.clearNodes(8);
+        this.clearNodes();
         for(var i = 0; i < num_nodes; i++)
             nodes.push({'id': i, 'x': width / 2, 'y': height / 2});
         for(var i = 1; i <= num_edges; i++){
@@ -337,6 +334,11 @@ var Graph = function(graph) {
                 linked_by_index[edge.target + '-' + edge.source] = 1;
             }
         }
+        this.countNodes();
+        console.log(adj);
+        console.log(nodes);
+        console.log(links);
+        console.log(linked_by_index);
     };
 
     this.findEdge = function(source, target) {
@@ -388,7 +390,7 @@ var Graph = function(graph) {
         data = {
             'name' : name,
             'data' : data
-        }
+        };
         $.ajax({
             url: window.location.href.split('/')[0] + '/algo/',
             data: data
@@ -407,7 +409,25 @@ var Graph = function(graph) {
         });
     }
 
+    this.networkGraph = function(name){
+        var that = this, data;
+        data = {
+            'name' : name
+        };
+        $.ajax({
+            url: window.location.href.split('/')[0] + '/graph/',
+            data: data
+        }).done(function(data){
+            var edges, str1 = "<div>", str2 = "</div>";
+            edges = data;
+            data = data.join("</div><div>");
+            str1 = str1.concat(data, str2);
+            $('#graph_data').html(str1);
+        });
+    }
+
 	this.refreshGraph = function() {
+		this.constructForceLayout();
 		link = container.selectAll('.link')
             .data(force.links())
 		    .enter()
@@ -416,7 +436,7 @@ var Graph = function(graph) {
             .attr('id', function(d) { return 'link_' + d.source.id + '_' + d.target.id; })
 			.append('line')
 			.attr('class', 'link-line')
-			.attr('stroke-width', 3)
+			.attr('stroke-width', 4)
 			.style('stroke', function(d) { return color(d.type); });
 
 		linkText = container.selectAll(".link")
@@ -541,19 +561,25 @@ $(document).on('ready', function() {
 });
 
 $('#graph_build').on('click', function(){
-	var num, type, vertex_list = [];
-    visualized = 0;
-    $('#graph_visualize').show();
-	num = $('#num_nodes').val();
-	type = $('#graph_type').val();
-	for(var i = 0; i < num; i++){
-		vertex_list.push({id: i});
-	}
-	graph.buildNodes(vertex_list, type);
+    if($('#graph_type option:selected').hasClass('js_generated')){
+        var num, type, vertex_list = [];
+        visualized = 0;
+        $('#graph_visualize').show();
+        num = $('#num_nodes').val();
+        type = $('#graph_type').val();
+        for(var i = 0; i < num; i++){
+            vertex_list.push({id: i});
+        }
+        graph.buildNodes(vertex_list, type);
+    }else{
+        graph.networkGraph($('#graph_type').val());
+        visualized = 0;
+        $('#graph_visualize').show();
+    }
 });
 
 $('#graph_visualize').on('click', function(){
-    if($('#graph_type').val() === 'input'){
+    if($('#graph_type').val() === 'input' || !$('#graph_type option:selected').hasClass('js_generated')){
         graph.buildGraphFromInput();
         if(graph.inspectLinks().length > EDGE_LIM){
             $('#warning_modal').modal('show');
@@ -598,6 +624,10 @@ $('#graph_type').on('change', function(){
         $('.opt').show();
         $('.custom_hide').hide();
         $('.custom_opt').show();
+    }else if($('#graph_type option:selected').hasClass('num_fixed')){
+        $('.opt').show();
+        $('.nx_opt').hide();
+        $('.num_opt').hide();
     }else{
         $('#graph_visualize').hide();
         $('.opt').show();

@@ -15,5 +15,6 @@ Route::when('*','csrf',array('post'));
 
 Route::controller('home','home');
 Route::controller('algo','algo');
+Route::controller('graph','graph');
 Route::get('/{option?}',array('uses' => 'Home@getIndex'));
 
