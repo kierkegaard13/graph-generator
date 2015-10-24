@@ -21,6 +21,14 @@ var dragging;
 var selected_option = -1;
 var prev_text = '';
 
+var spinner = '<div class="loader">' +
+              '<div class="rect1"></div>' +
+              '<div class="rect2"></div>' +
+              '<div class="rect3"></div>' +
+              '<div class="rect4"></div>' +
+              '<div class="rect5"></div>' +
+              '</div>';
+
 jQuery.expr[':'].icontains = function(a, i, m) {
     return jQuery(a).text().toUpperCase()
         .indexOf(m[3].toUpperCase()) >= 0;
@@ -63,7 +71,11 @@ var Graph = function(graph) {
         var k = Math.sqrt(nodes.length / (width * height));
 		force = d3.layout.force()
 			.charge(function(d) {
-                    var charge = -3000 * (least_edges / d.edges) - 200;
+                    var charge;
+                    if(d.edges > 0)
+                        charge = -3000 * (least_edges / d.edges) - 200;
+                    else
+                        charge = -3200;
                     return charge;
                 })
 			.linkDistance(function(d) {
@@ -314,11 +326,20 @@ var Graph = function(graph) {
 			nodes.push(vertex);
 		}
 		this.buildLinks(type);
+        $('#graph_build').html('Build');
 	};
 
     this.buildGraphFromInput = function(){
-        var num_nodes, num_edges, edge, data = $('#graph_data').html();
-        data = data.replace(/<\/div>/g,'').split(/<div[\s\w="-:;]*>/);
+        var num_nodes, num_edges, edge, data = $('#graph_data').html(),
+            data_by_div, data_by_nl;
+        data_by_div = data.replace(/<\/div>/g,'').split(/<[^<>]*>/);
+        data_by_nl = data.replace(/<[^<>]*>/g,'').split("\n");
+        console.log(data_by_div);
+        console.log(data_by_nl);
+        if(data_by_nl.length > 1)
+            data = data_by_nl;
+        else
+            data = data_by_div;
         if(data[0] === '')
             data.splice(0,1);
         num_nodes = parseInt(data[0].split(' ')[0]);
@@ -452,6 +473,7 @@ var Graph = function(graph) {
             data = data.join("</div><div>");
             str1 = str1.concat(data, str2);
             $('#graph_data').html(str1);
+            $('#graph_build').html('Build');
         });
     }
 
@@ -626,6 +648,7 @@ $(document).on('ready', function() {
 
 $('#graph_build').on('click', function(){
     var option = $('.graph_type_option').eq(selected_option);
+    $(this).html(spinner);
     console.log(selected_option, option);
     if(option.hasClass('js_generated')){
         console.log('hihi');
