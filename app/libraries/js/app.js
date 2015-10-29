@@ -331,11 +331,9 @@ var Graph = function(graph) {
 
     this.buildGraphFromInput = function(){
         var num_nodes, num_edges, edge, data = $('#graph_data').html(),
-            data_by_div, data_by_nl;
+            data_by_div, data_by_nl, node_names, node_idx;
         data_by_div = data.replace(/<\/div>/g,'').split(/<[^<>]*>/);
         data_by_nl = data.replace(/<[^<>]*>/g,'').split("\n");
-        console.log(data_by_div);
-        console.log(data_by_nl);
         if(data_by_nl.length > 1)
             data = data_by_nl;
         else
@@ -344,20 +342,30 @@ var Graph = function(graph) {
             data.splice(0,1);
         num_nodes = parseInt(data[0].split(' ')[0]);
         num_edges = parseInt(data[0].split(' ')[1]);
+        node_names = {};
+        node_idx = 0;
 		adj = [];
 		for(var i = 0; i < num_nodes; i++)
 			adj.push([]);
         this.clearNodes();
-        for(var i = 0; i < num_nodes; i++)
-            nodes.push({'id': i, 'x': width / 2, 'y': height / 2});
         for(var i = 1; i <= num_edges; i++){
             if(data[i].length > 0){
                 data[i].trim();
                 edge = data[i].split(' ');
+                if(!node_names.hasOwnProperty(edge[0])){
+                    node_names[edge[0]] = node_idx;
+                    nodes.push({'id': node_idx, 'name': edge[0], 'x': width / 2, 'y': height / 2});
+                    node_idx++;
+                }
+                if(!node_names.hasOwnProperty(edge[1])){
+                    node_names[edge[1]] = node_idx;
+                    nodes.push({'id': node_idx, 'name': edge[1], 'x': width / 2, 'y': height / 2});
+                    node_idx++;
+                }
                 if(edge.length < 3)
-                    edge = {'source': parseInt(edge[0]), 'target': parseInt(edge[1]), 'weight': undefined};
+                    edge = {'source': node_names[edge[0]], 'target': node_names[edge[1]], 'weight': undefined};
                 else
-                    edge = {'source': parseInt(edge[0]), 'target': parseInt(edge[1]), 'weight': parseFloat(edge[2])};
+                    edge = {'source': node_names[edge[0]], 'target': node_names[edge[1]], 'weight': parseFloat(edge[2])};
                 adj[edge.source].push(edge.target);
                 adj[edge.target].push(edge.source);
                 links.push({'source': nodes[edge.source], 'target': nodes[edge.target], 'type': 0, 'weight': edge.weight});
@@ -585,7 +593,7 @@ var Graph = function(graph) {
 			.style("font", "normal 18px Arial")
 			.attr("dy", ".35em")
 			.attr("text-anchor", "middle")
-            .text(function(d) { return d.id; });
+            .text(function(d) { return d.name; });
 
 		force.start();
 	};
@@ -638,7 +646,7 @@ var graph = new Graph();
 $(document).on('ready', function() {
 	var vertex_list = [];
 	for(var i = 0; i < 20; i++){
-		vertex_list.push({id: i});
+		vertex_list.push({id: i, name: i});
 	}
     $('#graph_type').text('Tree');
     selected_option = 0;
@@ -656,7 +664,7 @@ $('#graph_build').on('click', function(){
         num = $('#num_nodes').val();
         type = option.attr('value');
         for(var i = 0; i < num; i++){
-            vertex_list.push({id: i});
+            vertex_list.push({id: i, name: i});
         }
         graph.buildNodes(vertex_list, type);
     }else{
