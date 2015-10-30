@@ -37,12 +37,15 @@ jQuery.expr[':'].icontains = function(a, i, m) {
 var Graph = function(graph) {
 	var drag, link, linkText, linkTextShadow, labels, node, force, svg,
         container, total_edges, total_nodes, least_edges,
-        most_edges, node_degree;
+        most_edges, node_degree, loc_idx;
+    loc_idx = 0;
     node_degree = 0;
     total_nodes = 0;
     total_edges = 0;
     least_edges = -1;
     most_edges = -1;
+    var node_names = {};
+    var locations = [[10,10],[10,-10],[-10,-10],[-10,10]];
     var highlighted = [];
 	var adj = [];
 	var nodes = [];
@@ -102,14 +105,21 @@ var Graph = function(graph) {
             .on('dragend', dragended);
 	};
 
+    this.raiseError = function(message) {
+        $('#error_modal .modal-body').html(message);
+        $('#error_modal').modal('show');
+    };
+
 	this.clearNodes = function() {
 		nodes = [];
 		links = [];
+        loc_idx = 0;
         total_nodes = 0;
         total_edges = 0;
         least_edges = -1;
         most_edges = -1;
         node_degree = 0;
+        node_names = {};
 	};
 
 	this.refreshNodes = function() {
@@ -321,8 +331,9 @@ var Graph = function(graph) {
         this.clearNodes();
 		for(var i = 0; i < vertices.length; i++){
 			var vertex = vertices[i];
-			vertex.x = width / 2;
-			vertex.y = height / 2;
+			vertex.x = width / 2 + locations[loc_idx][0];
+			vertex.y = height / 2 + locations[loc_idx][1];
+            loc_idx = (loc_idx + 1) % locations.length;
 			nodes.push(vertex);
 		}
 		this.buildLinks(type);
@@ -331,7 +342,7 @@ var Graph = function(graph) {
 
     this.buildGraphFromInput = function(){
         var num_nodes, num_edges, edge, data = $('#graph_data').html(),
-            data_by_div, data_by_nl, node_names, node_idx;
+            data_by_div, data_by_nl, node_idx;
         data_by_div = data.replace(/<\/div>/g,'').split(/<[^<>]*>/);
         data_by_nl = data.replace(/<[^<>]*>/g,'').split("\n");
         if(data_by_nl.length > 1)
@@ -342,30 +353,36 @@ var Graph = function(graph) {
             data.splice(0,1);
         num_nodes = parseInt(data[0].split(' ')[0]);
         num_edges = parseInt(data[0].split(' ')[1]);
-        node_names = {};
         node_idx = 0;
 		adj = [];
+        /* init empty adjacency list */
 		for(var i = 0; i < num_nodes; i++)
 			adj.push([]);
         this.clearNodes();
+        /* loop through edge list and populate nodes and links */
         for(var i = 1; i <= num_edges; i++){
             if(data[i].length > 0){
                 data[i].trim();
                 edge = data[i].split(' ');
+                /* reassign node names to a unique id */
                 if(!node_names.hasOwnProperty(edge[0])){
                     node_names[edge[0]] = node_idx;
-                    nodes.push({'id': node_idx, 'name': edge[0], 'x': width / 2, 'y': height / 2});
+                    nodes.push({'id': node_idx, 'name': edge[0], 'x': width / 2 + locations[loc_idx][0], 'y': height / 2 + locations[loc_idx][1]});
+                    loc_idx = (loc_idx + 1) % locations.length;
                     node_idx++;
                 }
                 if(!node_names.hasOwnProperty(edge[1])){
                     node_names[edge[1]] = node_idx;
-                    nodes.push({'id': node_idx, 'name': edge[1], 'x': width / 2, 'y': height / 2});
+                    nodes.push({'id': node_idx, 'name': edge[1], 'x': width / 2 + locations[loc_idx][0], 'y': height / 2 + locations[loc_idx][1]});
+                    loc_idx = (loc_idx + 1) % locations.length;
                     node_idx++;
                 }
                 if(edge.length < 3)
                     edge = {'source': node_names[edge[0]], 'target': node_names[edge[1]], 'weight': undefined};
                 else
                     edge = {'source': node_names[edge[0]], 'target': node_names[edge[1]], 'weight': parseFloat(edge[2])};
+                if(edge.source >= num_nodes || edge.target >= num_nodes)
+                    return 1;
                 adj[edge.source].push(edge.target);
                 adj[edge.target].push(edge.source);
                 links.push({'source': nodes[edge.source], 'target': nodes[edge.target], 'type': 0, 'weight': edge.weight});
@@ -375,6 +392,7 @@ var Graph = function(graph) {
             }
         }
         this.countNodes();
+        return 0;
     };
 
     this.findEdge = function(source, target) {
@@ -432,13 +450,24 @@ var Graph = function(graph) {
             highlighted.pop();
         }
         for(var i = 0; i < edges.length; i++){
-            this.highlightEdge(edges[i].source, edges[i].target);
+            if(Object.keys(node_names).length > 0)
+                this.highlightEdge(node_names[String(edges[i].source)], node_names[String(edges[i].target)]);
+            else
+                this.highlightEdge(edges[i].source, edges[i].target);
             highlighted.push(edges[i]);
         }
     }
 
     this.algo = function(name){
-        var that = this, data = $('#graph_data').html().replace(/<\/div>/g,'').replace(/\n/g,'').split(/<div[\s\w="-:;]*>/);
+        var that = this, data = $('#graph_data').html(), data_by_div, data_by_nl;
+        data_by_div = data.replace(/<\/div>/g,'').split(/<[^<>]*>/);
+        data_by_nl = data.replace(/<[^<>]*>/g,'').split("\n");
+        if(data_by_nl.length > 1)
+            data = data_by_nl;
+        else
+            data = data_by_div;
+        if(data[0] === '')
+            data.splice(0,1);
         if(name === 'dijkstra'){
             if(data[0] !== '')
                 data[0] = data[0] + ' ' + $('#start').val() + ' ' + $('#end').val();
@@ -447,13 +476,18 @@ var Graph = function(graph) {
         }
         data = {
             'name' : name,
-            'data' : data
+            'data' : data,
+            '_token' : $('#form_token').val()
         };
         $.ajax({
             url: window.location.href.split('/')[0] + '/algo/',
-            data: data
+            contentType: 'application/json',
+            data: JSON.stringify(data),
+            timeout: 20000,
+            type: 'POST'
         }).done(function(data){
             var edges, str1 = "<div>", str2 = "</div>";
+            $('#graph_run').html('Run');
             edges = data;
             data = data.join("</div><div>");
             str1 = str1.concat(data, str2);
@@ -464,6 +498,9 @@ var Graph = function(graph) {
             if(name !== 'dijkstra')
                 that.highlightEdges(edges);
             $('#highlight_edges').html(str1);
+        }).fail(function(xhr, status, error){
+            $('#graph_run').html('Run');
+            that.raiseError('Algorithm failed to run');
         });
     }
 
@@ -649,6 +686,7 @@ $(document).on('ready', function() {
 		vertex_list.push({id: i, name: i});
 	}
     $('#graph_type').text('Tree');
+    prev_text = 'Tree';
     selected_option = 0;
 	graph.buildNodes(vertex_list, 'tree');
 	graph.refreshGraph();
@@ -656,10 +694,9 @@ $(document).on('ready', function() {
 
 $('#graph_build').on('click', function(){
     var option = $('.graph_type_option').eq(selected_option);
+    prev_text = $('#graph_type').text();
     $(this).html(spinner);
-    console.log(selected_option, option);
     if(option.hasClass('js_generated')){
-        console.log('hihi');
         var num, type, vertex_list = [];
         num = $('#num_nodes').val();
         type = option.attr('value');
@@ -673,7 +710,11 @@ $('#graph_build').on('click', function(){
 });
 
 $('#graph_visualize').on('click', function(){
-    graph.buildGraphFromInput();
+    var res = graph.buildGraphFromInput();
+    if(res !== 0){
+        graph.raiseError('Invalid edge list');
+        return false;
+    }
     if(graph.inspectLinks().length > EDGE_LIM){
         $('#warning_modal').modal('show');
     }else{
@@ -697,6 +738,7 @@ $('#graph_highlight').on('click', function(){
 
 $('#graph_run').on('click', function(){
     var algo = $('#graph_algo').val();
+    $('#graph_run').html(spinner);
     graph.algo(algo);
 });
 
@@ -704,12 +746,11 @@ $('#graph_algo').on('change', function(){
     if($(this).val() === 'dijkstra')
         $('#start').closest('.row').show();
     else
-       $('#start').closest('.row').hide();
+        $('#start').closest('.row').hide();
 });
 
 $('#graph_type').on('focus', function(){
     $('#graph_type_options').show();
-    prev_text = $('#graph_type').text();
     $('#graph_type').text('');
     $('.graph_type_option:icontains("' + $(this).text().trim() + '")').show();
 });

@@ -17,6 +17,21 @@
     <script src='{{base}}/app/libraries/js/jquery.mCustomScrollbar.concat.min.js'></script>
 </head>
 <body style="overflow:hidden;">
+<div class="modal fade" id="error_modal" aria-hidden="false" tabindex="-1" role="dialog" aria-labelledby="error_modalLabel">
+	<div class="modal-dialog modal-md" style="z-index:1050;">
+		<div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+				<h4 class="modal-title">Error</h4>
+			</div>
+            <div class="modal-body">
+            </div>
+			<div class="modal-footer">
+				<button id="dismiss_error" type="button" class="btn btn-primary" data-dismiss="modal">Dismiss</button>
+			</div>
+		</div>
+	</div>	
+</div>
 <div class="modal fade" id="warning_modal" aria-hidden="false" tabindex="-1" role="dialog" aria-labelledby="warning_modalLabel">
 	<div class="modal-dialog modal-md" style="z-index:1050;">
 		<div class="modal-content">
@@ -36,6 +51,7 @@
 </div>
 <div class="row" style="height:100%;">
 	<div class="col-sm-3 graph_info">
+        <input id="form_token" type="hidden" value="{{csrf_token()}}">
         <div class="dropup collapse_cont">
             <a class="collapse_toggle" role="button" href="#generation_collapse" aria-expanded="false" aria-controls="generation_collapse">
                 Graph Generation
@@ -83,9 +99,6 @@
                 </div>
             </div>
             <div><strong>Edge List</strong></div>
-            <div style="font-size:14px;color:#555;margin-bottom:5px;">
-                Nodes must be 0-indexed if manually input
-            </div>
             <div id="graph_data" contenteditable="true">
             </div>
             <button id="graph_build" title="Generate list of nodes and edges" class="btn btn-primary opt">Build</button>
